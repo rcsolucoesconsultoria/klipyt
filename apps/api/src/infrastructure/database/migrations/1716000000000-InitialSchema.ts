@@ -174,7 +174,7 @@ export class InitialSchema1716000000000 implements MigrationInterface {
     `);
     await queryRunner.query(`
       CREATE INDEX IF NOT EXISTS idx_unified_collections_rate
-      ON unified_collections(user_id, establishment_id, asset_type, (collected_at::date))
+      ON unified_collections(user_id, establishment_id, asset_type, collected_at)
     `);
 
     await queryRunner.query(`

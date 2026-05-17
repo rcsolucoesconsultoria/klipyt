@@ -29,6 +29,10 @@ const MOCK_ESTABLISHMENTS = [
   },
 ];
 
+function pointGeom(lon: number, lat: number): { type: 'Point'; coordinates: [number, number] } {
+  return { type: 'Point', coordinates: [lon, lat] };
+}
+
 export async function seedEstablishments(dataSource: DataSource): Promise<void> {
   const estRepo = dataSource.getRepository(Establishment);
   const packRepo = dataSource.getRepository(StickerPack);
@@ -37,23 +41,21 @@ export async function seedEstablishments(dataSource: DataSource): Promise<void> 
     const existing = await estRepo.findOne({ where: { cnpj: data.cnpj } });
     if (existing) continue;
 
-    const geom = `SRID=4326;POINT(${data.lon} ${data.lat})`;
     const est = await estRepo.save(
       estRepo.create({
         cnpj_root: data.cnpj_root,
         cnpj: data.cnpj,
         trade_name: data.trade_name,
         address_text: data.address_text,
-        geom,
+        geom: pointGeom(data.lon, data.lat) as unknown as string,
         is_active: true,
       }),
     );
 
-    const packGeomOffset = `SRID=4326;POINT(${data.lon + 0.0001} ${data.lat + 0.0001})`;
     await packRepo.save(
       packRepo.create({
         establishment_id: est.id,
-        geom: packGeomOffset,
+        geom: pointGeom(data.lon + 0.0001, data.lat + 0.0001) as unknown as string,
         is_active: true,
       }),
     );
