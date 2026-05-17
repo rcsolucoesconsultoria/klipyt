@@ -1,0 +1,101 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master, develop]
+  pull_request:
+    branches: [main, master, develop]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "20"
+  DB_HOST: localhost
+  DB_PORT: 5432
+  DB_USER: klipyt_admin
+  DB_PASS: klipyt_strong_password
+  DB_NAME: klipyt_prod
+  REDIS_URL: redis://localhost:6379
+  JWT_SECRET: ci-jwt-secret-for-github-actions-only
+  NODE_ENV: test
+  PIX_GATEWAY: mock
+
+jobs:
+  test-and-build:
+    name: Testes e build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Testes unitários (API)
+        run: npm run test:api
+
+      - name: Build API
+        run: npm run build:api
+
+      - name: Build PWA
+        run: npm run build:pwa
+
+  database-migrations:
+    name: Migrations (up / down)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: test-and-build
+
+    services:
+      postgres:
+        image: postgis/postgis:15-3.3-alpine
+        env:
+          POSTGRES_USER: klipyt_admin
+          POSTGRES_PASSWORD: klipyt_strong_password
+          POSTGRES_DB: klipyt_prod
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U klipyt_admin -d klipyt_prod"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Migration up
+        run: npm run migration:run
+
+      - name: Migration down (última)
+        run: npm run migration:revert
