@@ -2,7 +2,7 @@ import { OpenPackUseCase } from './open-pack.use-case';
 import { Rarity } from '../../domain/enums/rarity.enum';
 import { GeoValidatorService } from '../../domain/services/geo-validator.service';
 import { RarityRollerService } from '../../domain/services/rarity-roller.service';
-import { HttpException, HttpStatus, NotFoundException } from '@nestjs/common';
+import { HttpStatus } from '@nestjs/common';
 
 const ESTABLISHMENT_ID = 'est-uuid-1';
 const PACK_GEOM = 'POINT(-46.6333 -23.5505)';

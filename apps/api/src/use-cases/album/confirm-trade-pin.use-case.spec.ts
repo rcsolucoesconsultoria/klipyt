@@ -1,6 +1,6 @@
 import { ConfirmTradePinUseCase } from './confirm-trade-pin.use-case';
 import { GeoValidatorService } from '../../domain/services/geo-validator.service';
-import { HttpException, HttpStatus } from '@nestjs/common';
+import { HttpStatus } from '@nestjs/common';
 
 const mockUserStickerRepo = {
   upsert: jest.fn(),

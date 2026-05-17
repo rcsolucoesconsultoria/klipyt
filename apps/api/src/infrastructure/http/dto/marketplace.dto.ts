@@ -1,4 +1,4 @@
-import { IsIn, IsNotEmpty, IsNumber, IsOptional, IsUUID, Min } from 'class-validator';
+import { IsIn, IsNumber, IsOptional, IsUUID, Min } from 'class-validator';
 
 export class CreateListingDto {
   @IsUUID()

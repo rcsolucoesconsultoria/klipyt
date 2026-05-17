@@ -20,7 +20,6 @@ import { IUnifiedCollectionRepository } from '../album/ports/unified-collection-
 import { IFinancialCoinCollectPort } from './ports/financial-coin-collect.port';
 
 const GEO_TOLERANCE_METERS = 25;
-const VIDEO_TOKEN_TTL = 300;
 const RATE_LIMIT_TTL = 86400;
 
 export interface CollectCoinInput {

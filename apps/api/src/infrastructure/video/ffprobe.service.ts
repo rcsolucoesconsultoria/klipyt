@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { execFile } from 'child_process';
 import { promisify } from 'util';
-import { unlink } from 'fs/promises';
 import { IFfprobeService } from '../../use-cases/campaign/upload-campaign-video.use-case';
 
 const execFileAsync = promisify(execFile);

@@ -1,0 +1,15 @@
+node_modules
+**/node_modules
+**/dist
+.git
+.github
+.env
+.env.*
+!.env.example
+coverage
+**/*.spec.ts
+apps/pwa
+packages/portal-pj/src
+prompts
+*.md
+gerar_docs.py

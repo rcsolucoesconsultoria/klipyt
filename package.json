@@ -10,6 +10,8 @@
     "dev:pwa": "npm run dev --workspace=apps/pwa",
     "build:api": "npm run build --workspace=apps/api",
     "build:pwa": "npm run build --workspace=apps/pwa",
+    "build:portal-pj": "npm run build --workspace=packages/portal-pj",
+    "lint:api": "npm run lint --workspace=apps/api",
     "test:api": "npm run test --workspace=apps/api",
     "test:api:e2e": "npm run test:e2e --workspace=apps/api",
     "migration:run": "npm run migration:run --workspace=apps/api",

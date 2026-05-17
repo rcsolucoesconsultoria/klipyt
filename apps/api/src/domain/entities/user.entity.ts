@@ -3,7 +3,6 @@ import {
   CreateDateColumn,
   Entity,
   Index,
-  OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { UserStatus } from '../enums/user-status.enum';

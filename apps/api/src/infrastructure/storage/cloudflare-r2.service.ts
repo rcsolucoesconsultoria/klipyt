@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { createReadStream } from 'fs';
 import { unlink } from 'fs/promises';
 import { IStorageService } from '../../use-cases/campaign/upload-campaign-video.use-case';

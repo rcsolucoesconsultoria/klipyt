@@ -1,4 +1,4 @@
-import { Inject, Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Inject, Injectable, BadRequestException } from '@nestjs/common';
 import { PinCode } from '../../domain/value-objects/pin-code.vo';
 import { RedisService } from '../../infrastructure/redis/redis.service';
 import { TOKENS } from '../tokens';

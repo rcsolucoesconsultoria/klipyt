@@ -1,5 +1,4 @@
 import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { Campaign } from '../../domain/entities/campaign.entity';
 import { CampaignStatus } from '../../domain/enums/campaign-status.enum';
 import { SmartBlendingCalculatorService } from '../../domain/services/smart-blending-calculator.service';
 import { Money } from '../../domain/value-objects/money.vo';

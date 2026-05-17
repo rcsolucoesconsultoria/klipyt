@@ -13,7 +13,6 @@ import { diskStorage } from 'multer';
 import { extname } from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
-import { CurrentUser } from '../decorators/current-user.decorator';
 import { CreateCampaignUseCase } from '../../../use-cases/campaign/create-campaign.use-case';
 import { UploadCampaignVideoUseCase } from '../../../use-cases/campaign/upload-campaign-video.use-case';
 import { GetCampaignAnalyticsUseCase } from '../../../use-cases/campaign/get-campaign-analytics.use-case';

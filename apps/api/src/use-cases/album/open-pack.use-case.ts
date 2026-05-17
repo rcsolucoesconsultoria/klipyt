@@ -1,4 +1,4 @@
-import { ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { HttpException, HttpStatus } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
 import { Sticker } from '../../domain/entities/sticker.entity';

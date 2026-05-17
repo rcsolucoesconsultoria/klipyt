@@ -41,6 +41,9 @@ jobs:
       - name: Instalar dependências
         run: npm ci
 
+      - name: Lint API
+        run: npm run lint:api
+
       - name: Testes unitários (API)
         run: npm run test:api
 
@@ -49,6 +52,9 @@ jobs:
 
       - name: Build PWA
         run: npm run build:pwa
+
+      - name: Build Portal PJ
+        run: npm run build:portal-pj
 
   database-migrations:
     name: Migrations (up / down)

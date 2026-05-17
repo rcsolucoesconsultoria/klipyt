@@ -1,6 +1,5 @@
 import { DataSource } from 'typeorm';
 import Redis from 'ioredis';
-import { DensityTier } from '../../../domain/enums/density-tier.enum';
 
 export async function seedBillboards(ds: DataSource, redis: Redis) {
   const existing = await ds.query(`SELECT COUNT(*)::int AS c FROM virtual_billboards`);
