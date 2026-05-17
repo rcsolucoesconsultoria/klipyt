@@ -69,4 +69,16 @@ export class RedisService {
   async zrem(key: string, member: string): Promise<void> {
     await this.redis.zrem(key, member);
   }
+
+  async incrementWithExpiry(key: string, ttlSeconds: number): Promise<number> {
+    const newVal = await this.redis.incr(key);
+    if (newVal === 1) await this.redis.expire(key, ttlSeconds);
+    return newVal;
+  }
+
+  async geopos(key: string, member: string): Promise<[number, number] | null> {
+    const result = await this.redis.geopos(key, member);
+    if (!result || !result[0]) return null;
+    return [parseFloat(result[0][0] as string), parseFloat(result[0][1] as string)];
+  }
 }
