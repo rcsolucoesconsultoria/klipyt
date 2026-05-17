@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import Redis from 'ioredis';
-import { REDIS_CLIENT } from './redis.module';
+import { REDIS_CLIENT } from './redis.constants';
 
 @Injectable()
 export class RedisService {
@@ -80,5 +80,13 @@ export class RedisService {
     const result = await this.redis.geopos(key, member);
     if (!result || !result[0]) return null;
     return [parseFloat(result[0][0] as string), parseFloat(result[0][1] as string)];
+  }
+
+  async keys(pattern: string): Promise<string[]> {
+    return this.redis.keys(pattern);
+  }
+
+  async hget(key: string, field: string): Promise<string | null> {
+    return this.redis.hget(key, field);
   }
 }

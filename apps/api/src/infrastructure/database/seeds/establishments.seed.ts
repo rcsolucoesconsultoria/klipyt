@@ -1,6 +1,7 @@
 import { DataSource } from 'typeorm';
 import { Establishment } from '../../../domain/entities/establishment.entity';
 import { StickerPack } from '../../../domain/entities/sticker-pack.entity';
+import Redis from 'ioredis';
 
 const MOCK_ESTABLISHMENTS = [
   {
@@ -29,17 +30,27 @@ const MOCK_ESTABLISHMENTS = [
   },
 ];
 
-function pointGeom(lon: number, lat: number): { type: 'Point'; coordinates: [number, number] } {
-  return { type: 'Point', coordinates: [lon, lat] };
+function pointGeom(lon: number, lat: number): string {
+  return `SRID=4326;POINT(${lon} ${lat})`;
 }
 
-export async function seedEstablishments(dataSource: DataSource): Promise<void> {
+export async function seedEstablishments(
+  dataSource: DataSource,
+  redis?: Redis,
+): Promise<void> {
   const estRepo = dataSource.getRepository(Establishment);
   const packRepo = dataSource.getRepository(StickerPack);
 
   for (const data of MOCK_ESTABLISHMENTS) {
     const existing = await estRepo.findOne({ where: { cnpj: data.cnpj } });
-    if (existing) continue;
+
+    if (existing) {
+      const pack = await packRepo.findOne({ where: { establishment_id: existing.id } });
+      if (redis && pack) {
+        await redis.geoadd('active_packs:geo', data.lon + 0.0001, data.lat + 0.0001, pack.id);
+      }
+      continue;
+    }
 
     const est = await estRepo.save(
       estRepo.create({
@@ -47,18 +58,23 @@ export async function seedEstablishments(dataSource: DataSource): Promise<void> 
         cnpj: data.cnpj,
         trade_name: data.trade_name,
         address_text: data.address_text,
-        geom: pointGeom(data.lon, data.lat) as unknown as string,
+        geom: pointGeom(data.lon, data.lat),
         is_active: true,
       }),
     );
 
-    await packRepo.save(
+    const pack = await packRepo.save(
       packRepo.create({
         establishment_id: est.id,
-        geom: pointGeom(data.lon + 0.0001, data.lat + 0.0001) as unknown as string,
+        geom: pointGeom(data.lon + 0.0001, data.lat + 0.0001),
         is_active: true,
       }),
     );
+
+    if (redis) {
+      await redis.geoadd('active_packs:geo', data.lon + 0.0001, data.lat + 0.0001, pack.id);
+      console.log(`GEOADD pack ${pack.id} → active_packs:geo`);
+    }
 
     console.log(`Seed estabelecimento: ${data.trade_name}`);
   }

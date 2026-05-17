@@ -1,0 +1,2315 @@
+{
+	"info": {
+		"_postman_id": "d11be28f-8272-4258-8404-1ea4002348bc",
+		"name": "API de PIX",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Sandbox",
+			"item": [
+				{
+					"name": "Cobranca Imediata",
+					"item": [
+						{
+							"name": "Criar cobrança imediata​",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript"
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"// CÓDIGO PARA GERAÇÃO DE txid, sinta-se a vontade para remover ou não.",
+											"// Função para gerar um ID aleatório de 26 a 35 caracteres",
+											"function geratxid(minLength, maxLength) {",
+											"    var characters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';",
+											"    var idLength = Math.floor(Math.random() * (maxLength - minLength + 1)) + minLength;",
+											"    var result = '';",
+											"    for (var i = 0; i < idLength; i++) {",
+											"        result += characters.charAt(Math.floor(Math.random() * characters.length));",
+											"    }",
+											"    return result;",
+											"}",
+											" ",
+											"// Gerar o ID aleatório",
+											"var txid = geratxid(26, 35);",
+											" ",
+											"// Armazenar o ID na variável 'txid' para ser usado no endpoint",
+											"pm.environment.set('txid', txid);",
+											"console.log(\"Codigo txid: \" + txid);"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{your_access_token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"calendario\": {\n        \"expiracao\": 172800\n    },\n    \"devedor\": {\n        \"cnpj\": \"{{cnpj}}\",\n        \"nome\": \"Jussara Ferreira da Silva\"\n    },\n    \"valor\": {\n        \"original\": \"100.00\",\n        \"modalidadeAlteracao\": 1\n    },\n    \"chave\": \"{{sua_chave_pix}}\",\n    \"solicitacaoPagador\": \"Serviço realizado.\",\n    \"infoAdicionais\": [\n        {\n            \"nome\": \"Campo 1\",\n            \"valor\": \"Informação Adicional1 do PSP-Recebedor\"\n        },\n        {\n            \"nome\": \"Campo 2\",\n            \"valor\": \"Informação Adicional2 do PSP-Recebedor\"\n        }\n    ]\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "https://baas-api-sandbox.c6bank.info/v2/pix/cob/{{txid}}",
+									"protocol": "https",
+									"host": [
+										"baas-api-sandbox",
+										"c6bank",
+										"info"
+									],
+									"path": [
+										"v2",
+										"pix",
+										"cob",
+										"{{txid}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Revisar cobrança imediata​",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript"
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "PATCH",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{your_access_token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"devedor\": {\n        \"cpf\": \"36243738892\",\n        \"nome\": \"Francisca Aparecida Navegantes\"\n    },\n    \"valor\": {\n        \"original\": \"200.01\"\n    },\n    \"solicitacaoPagador\": \"Cobrança de serviços prestados no ano de 2025.\"\n     \n\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "https://baas-api-sandbox.c6bank.info/v2/pix/cob/{{txid}}",
+									"protocol": "https",
+									"host": [
+										"baas-api-sandbox",
+										"c6bank",
+										"info"
+									],
+									"path": [
+										"v2",
+										"pix",
+										"cob",
+										"{{txid}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Consultar cobrança imediata​",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{your_access_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "https://baas-api-sandbox.c6bank.info/v2/pix/cob/{{txid}}",
+									"protocol": "https",
+									"host": [
+										"baas-api-sandbox",
+										"c6bank",
+										"info"
+									],
+									"path": [
+										"v2",
+										"pix",
+										"cob",
+										"{{txid}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Criar cobrança imediata​ sem txid",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript"
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{your_access_token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"calendario\": {\n        \"expiracao\": 172800\n    },\n    \"devedor\": {\n        \"cnpj\": \"{{cnpj}}\",\n        \"nome\": \"Empresa de Serviços SA\"\n    },\n    \"valor\": {\n        \"original\": \"100.02\",\n        \"modalidadeAlteracao\": 1\n    },\n    \"chave\": \"{{chavepix_baas}}\",\n    \"solicitacaoPagador\": \"Serviço realizado.\",\n    \"infoAdicionais\": [\n        {\n            \"nome\": \"Campo 1\",\n            \"valor\": \"Informação Adicional1 do PSP-Recebedor\"\n        },\n        {\n            \"nome\": \"Campo 2\",\n            \"valor\": \"Informação Adicional2 do PSP-Recebedor\"\n        }\n    ]\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "https://baas-api-sandbox.c6bank.info/v2/pix/cob/",
+									"protocol": "https",
+									"host": [
+										"baas-api-sandbox",
+										"c6bank",
+										"info"
+									],
+									"path": [
+										"v2",
+										"pix",
+										"cob",
+										""
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Consultar lista de cobranças imediatas​",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{your_access_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "https://baas-api-sandbox.c6bank.info/v2/pix/cob?inicio=2025-09-26T00:00:00&fim=2025-09-26T23:59:59",
+									"protocol": "https",
+									"host": [
+										"baas-api-sandbox",
+										"c6bank",
+										"info"
+									],
+									"path": [
+										"v2",
+										"pix",
+										"cob"
+									],
+									"query": [
+										{
+											"key": "inicio",
+											"value": "2025-09-26T00:00:00"
+										},
+										{
+											"key": "fim",
+											"value": "2025-09-26T23:59:59"
+										}
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Cobrança com vencimento",
+					"item": [
+						{
+							"name": "Criar cobrança com vencimento​",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript"
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"// CÓDIGO PARA GERAÇÃO DE txid, sinta-se a vontade para remover ou não.",
+											"// Função para gerar um ID aleatório de 26 a 35 caracteres",
+											"function geratxid(minLength, maxLength) {",
+											"    var characters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';",
+											"    var idLength = Math.floor(Math.random() * (maxLength - minLength + 1)) + minLength;",
+											"    var result = '';",
+											"    for (var i = 0; i < idLength; i++) {",
+											"        result += characters.charAt(Math.floor(Math.random() * characters.length));",
+											"    }",
+											"    return result;",
+											"}",
+											" ",
+											"// Gerar o ID aleatório",
+											"var txid = geratxid(26, 35);",
+											" ",
+											"// Armazenar o ID na variável 'txid' para ser usado no endpoint",
+											"pm.environment.set('txid', txid);",
+											"",
+											"",
+											" ",
+											"console.log(\"Codigo txid: \" + txid);"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{your_access_token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"calendario\": {\n        \"dataDeVencimento\": \"2026-12-30\",\n        \"validadeAposVencimento\": 30\n    },\n    \"devedor\": {\n        \"nome\": \"LOURENCO RIBEIRO \",\n        \"cnpj\": \"{{cnpj}}\",\n        \"logradouro\": \"R CAPITAO NELSON PEREIRA\",\n        \"cidade\": \"PELOTAS\",\n        \"uf\": \"RS\",\n        \"cep\": \"96085080\"\n    },\n    \"valor\": {\n        \"original\": \"151.00\",\n        \"multa\": {\n            \"modalidade\": 2,\n            \"valorPerc\": \"5.00\"\n        },\n        \"juros\": {\n            \"modalidade\": 2,\n            \"valorPerc\": \"11.00\"\n        }\n    },\n    \"chave\": \"{{chavepix_baas}}\",\n    \"solicitacaoPagador\": \"Cobrança dos serviços prestados.\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "https://baas-api-sandbox.c6bank.info/v2/pix/cobv/{{txid}}",
+									"protocol": "https",
+									"host": [
+										"baas-api-sandbox",
+										"c6bank",
+										"info"
+									],
+									"path": [
+										"v2",
+										"pix",
+										"cobv",
+										"{{txid}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Revisar cobrança com vencimento​",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript"
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "PATCH",
+								"header": [
+									{
+										"key": "person_Id",
+										"value": "123",
+										"type": "text"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{your_access_token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"devedor\": {\n        \"logradouro\": \"Alameda Souza, Numero 80, Bairro Braz\",\n        \"cidade\": \"Recife\",\n        \"uf\": \"PE\",\n        \"cep\": \"70011750\",\n        \"cpf\": \"{{cpf}}\",\n        \"nome\": \"Francisco da Conceição\"\n    },\n    \"valor\": {\n        \"original\": \"299.01\"\n    },\n    \"solicitacaoPagador\": \"Cobrança de serviços prestados.\",\n    \"chave\": \"{{sua_chave_pix}}\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "https://baas-api-sandbox.c6bank.info/v2/pix/cobv/{{txid}}",
+									"protocol": "https",
+									"host": [
+										"baas-api-sandbox",
+										"c6bank",
+										"info"
+									],
+									"path": [
+										"v2",
+										"pix",
+										"cobv",
+										"{{txid}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Consultar cobrança com vencimento​",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{your_access_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "https://baas-api-sandbox.c6bank.info/v2/pix/cobv/{{txid}}",
+									"protocol": "https",
+									"host": [
+										"baas-api-sandbox",
+										"c6bank",
+										"info"
+									],
+									"path": [
+										"v2",
+										"pix",
+										"cobv",
+										"{{txid}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Consultar lista de cobranças com vencimento​",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"",
+											"var jsonData = pm.response.json();",
+											"",
+											"",
+											"pm.test(\"Validando Status Code\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											" ",
+											"pm.test(\"Resposta contém 'parametros' e 'cobs'\", function () {",
+											"    pm.expect(jsonData).to.have.property(\"parametros\");",
+											"    pm.expect(jsonData).to.have.property(\"cobs\");",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "person_Id",
+										"value": "123",
+										"type": "text"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{your_access_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "https://baas-api-sandbox.c6bank.info/v2/pix/cobv?inicio=2025-09-24T00:00:00&fim=2025-09-24T23:59:59",
+									"protocol": "https",
+									"host": [
+										"baas-api-sandbox",
+										"c6bank",
+										"info"
+									],
+									"path": [
+										"v2",
+										"pix",
+										"cobv"
+									],
+									"query": [
+										{
+											"key": "inicio",
+											"value": "2025-09-24T00:00:00"
+										},
+										{
+											"key": "fim",
+											"value": "2025-09-24T23:59:59"
+										}
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Cobrança em lote",
+					"item": [
+						{
+							"name": "Criar/Alterar lote de cobranças com vencimento​",
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{your_access_token}}"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"descricao\": \"Cobranças dos alunos do turno vespertino\",\n  \"cobsv\": [\n    {\n      \"calendario\": {\n        \"dataDeVencimento\": \"2025-12-31\",\n        \"validadeAposVencimento\": 30\n      },\n      \"txid\": \"{{txid}}\",\n      \"devedor\": {\n        \"logradouro\": \"Alameda Souza, Numero 80, Bairro Braz\",\n        \"cidade\": \"Recife\",\n        \"uf\": \"PE\",\n        \"cep\": \"70011750\",\n        \"cpf\": {{cpf}},\n        \"nome\": \"João Souza\"\n      },\n      \"valor\": {\n        \"original\": \"100.00\"\n      },\n      \"chave\": \"{{sua_chave_pix}}\",\n      \"solicitacaoPagador\": \"Informar matrícula\"\n    },\n    {\n      \"calendario\": {\n        \"dataDeVencimento\": \"2025-12-31\",\n        \"validadeAposVencimento\": 30\n      },\n      \"txid\": \"7978c0c97ea847e78e8849634473c1f1\",\n      \"loc\": {\n        \"id\": 57221\n      },\n      \"devedor\": {\n        \"logradouro\": \"Rua 15, Numero 1, Bairro Campo Grande\",\n        \"cidade\": \"Recife\",\n        \"uf\": \"PE\",\n        \"cep\": \"70055751\",\n        \"cpf\": \"15311295449\",\n        \"nome\": \"Manoel Silva\"\n      },\n      \"valor\": {\n        \"original\": \"100.00\"\n      },\n      \"chave\": \"{sua_chave_pix}\",\n      \"solicitacaoPagador\": \"Informar matrícula\"\n    }\n  ]\n}"
+								},
+								"url": {
+									"raw": "https://baas-api-sandbox.c6bank.info/v2/pix/lotecobv/{{txid}}",
+									"protocol": "https",
+									"host": [
+										"baas-api-sandbox",
+										"c6bank",
+										"info"
+									],
+									"path": [
+										"v2",
+										"pix",
+										"lotecobv",
+										"{{txid}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Revisar cobr espec dentro de um lote de cobr com venc",
+							"request": {
+								"method": "PATCH",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{your_access_token}}"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"cobsv\": [\n    {\n      \"calendario\": {\n        \"dataDeVencimento\": \"2025-01-10\"\n      },\n      \"txid\": \"{{txid}}\",\n      \"valor\": {\n        \"original\": \"110.00\"\n      }\n    },\n    {\n      \"calendario\": {\n        \"dataDeVencimento\": \"2025-01-10\"\n      },\n      \"txid\": \"{{txid}}\",\n      \"valor\": {\n        \"original\": \"110.00\"\n      }\n    }\n  ]\n}"
+								},
+								"url": {
+									"raw": "https://baas-api-sandbox.c6bank.info/v2/pix/lotecobv/{{txid}}",
+									"protocol": "https",
+									"host": [
+										"baas-api-sandbox",
+										"c6bank",
+										"info"
+									],
+									"path": [
+										"v2",
+										"pix",
+										"lotecobv",
+										"{{txid}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Consultar  lote específico de cobr com venc​",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{your_access_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "https://baas-api-sandbox.c6bank.info/v2/pix/lotecobv/{{txid}}",
+									"protocol": "https",
+									"host": [
+										"baas-api-sandbox",
+										"c6bank",
+										"info"
+									],
+									"path": [
+										"v2",
+										"pix",
+										"lotecobv",
+										"{{txid}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Consultar lotes de cobranças com venc",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{your_access_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "https://baas-api-sandbox.c6bank.info/v2/pix/lotecobv?inicio=2025-09-24T00:00:00&fim=2025-09-25T23:59:00",
+									"protocol": "https",
+									"host": [
+										"baas-api-sandbox",
+										"c6bank",
+										"info"
+									],
+									"path": [
+										"v2",
+										"pix",
+										"lotecobv"
+									],
+									"query": [
+										{
+											"key": "inicio",
+											"value": "2025-09-24T00:00:00"
+										},
+										{
+											"key": "fim",
+											"value": "2025-09-25T23:59:00"
+										}
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Gerenciar URLs de cobrança",
+					"item": [
+						{
+							"name": "Criar location do payload cob",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript"
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{your_access_token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"tipoCob\": \"cob\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "https://baas-api-sandbox.c6bank.info/v2/pix/loc/",
+									"protocol": "https",
+									"host": [
+										"baas-api-sandbox",
+										"c6bank",
+										"info"
+									],
+									"path": [
+										"v2",
+										"pix",
+										"loc",
+										""
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Consultar locations cadastradas cob",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{your_access_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "https://baas-api-sandbox.c6bank.info/v2/pix/loc?inicio=2025-09-29T00:00:00&fim=2025-09-29T23:59:00",
+									"protocol": "https",
+									"host": [
+										"baas-api-sandbox",
+										"c6bank",
+										"info"
+									],
+									"path": [
+										"v2",
+										"pix",
+										"loc"
+									],
+									"query": [
+										{
+											"key": "inicio",
+											"value": "2025-09-29T00:00:00"
+										},
+										{
+											"key": "fim",
+											"value": "2025-09-29T23:59:00"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Recuperar location do payload cob",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{your_access_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "https://baas-api-sandbox.c6bank.info/v2/pix/loc/{{txid}}",
+									"protocol": "https",
+									"host": [
+										"baas-api-sandbox",
+										"c6bank",
+										"info"
+									],
+									"path": [
+										"v2",
+										"pix",
+										"loc",
+										"{{txid}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Desvincular uma cobrança de uma location",
+							"request": {
+								"method": "DELETE",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{your_access_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "https://baas-api-sandbox.c6bank.info/v2/pix/loc/{{txid}}/txid",
+									"protocol": "https",
+									"host": [
+										"baas-api-sandbox",
+										"c6bank",
+										"info"
+									],
+									"path": [
+										"v2",
+										"pix",
+										"loc",
+										"{{txid}}",
+										"txid"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "PIX recebidos",
+					"item": [
+						{
+							"name": "Consultar Pix",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{your_access_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "https://baas-api-sandbox.c6bank.info/v2/pix/pix/{{e2eid}}",
+									"protocol": "https",
+									"host": [
+										"baas-api-sandbox",
+										"c6bank",
+										"info"
+									],
+									"path": [
+										"v2",
+										"pix",
+										"pix",
+										"{{e2eid}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Consultar Pix recebidos",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{your_access_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "https://baas-api-sandbox.c6bank.info/v2/pix/pix?inicio=2025-09-24T00:00:00Z&fim=2025-09-30T23:59:00Z",
+									"protocol": "https",
+									"host": [
+										"baas-api-sandbox",
+										"c6bank",
+										"info"
+									],
+									"path": [
+										"v2",
+										"pix",
+										"pix"
+									],
+									"query": [
+										{
+											"key": "inicio",
+											"value": "2025-09-24T00:00:00Z"
+										},
+										{
+											"key": "fim",
+											"value": "2025-09-30T23:59:00Z"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Solicitar Devolucao",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{your_access_token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"valor\": \"10.01\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "https://baas-api-sandbox.c6bank.info/v2/pix/pix/{{e2eid}}/devolucao/{{id_devolucao}}",
+									"protocol": "https",
+									"host": [
+										"baas-api-sandbox",
+										"c6bank",
+										"info"
+									],
+									"path": [
+										"v2",
+										"pix",
+										"pix",
+										"{{e2eid}}",
+										"devolucao",
+										"{{id_devolucao}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Consultar Devolucao",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{your_access_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "https://baas-api-sandbox.c6bank.info/v2/pix/pix/{{e2eid}}/devolucao/{{id_devolucao}}",
+									"protocol": "https",
+									"host": [
+										"baas-api-sandbox",
+										"c6bank",
+										"info"
+									],
+									"path": [
+										"v2",
+										"pix",
+										"pix",
+										"{{e2eid}}",
+										"devolucao",
+										"{{id_devolucao}}"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Notificações (Webhook)",
+					"item": [
+						{
+							"name": "Cadastro WebHooks PIX",
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{your_access_token}}"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"webhookUrl\": \"{{sua_url}}\"\n}"
+								},
+								"url": {
+									"raw": "https://baas-api-sandbox.c6bank.info/v2/pix/webhook/{{sua_chave_pix}}",
+									"protocol": "https",
+									"host": [
+										"baas-api-sandbox",
+										"c6bank",
+										"info"
+									],
+									"path": [
+										"v2",
+										"pix",
+										"webhook",
+										"{{sua_chave_pix}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Consulta WebHooks PIX",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{your_access_token}}"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "https://baas-api-sandbox.c6bank.info/v2/pix/webhook/{{sua_chave_pix}}",
+									"protocol": "https",
+									"host": [
+										"baas-api-sandbox",
+										"c6bank",
+										"info"
+									],
+									"path": [
+										"v2",
+										"pix",
+										"webhook",
+										"{{sua_chave_pix}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Exclusão WebHooks PIX",
+							"request": {
+								"method": "DELETE",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{your_access_token}}"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "https://baas-api-sandbox.c6bank.info/v2/pix/webhook/{{sua_chave_pix}}",
+									"protocol": "https",
+									"host": [
+										"baas-api-sandbox",
+										"c6bank",
+										"info"
+									],
+									"path": [
+										"v2",
+										"pix",
+										"webhook",
+										"{{sua_chave_pix}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Consulta WebHooks PIX",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{your_access_token}}"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "https://baas-api-sandbox.c6bank.info/v2/pix/webhook",
+									"protocol": "https",
+									"host": [
+										"baas-api-sandbox",
+										"c6bank",
+										"info"
+									],
+									"path": [
+										"v2",
+										"pix",
+										"webhook"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Produção",
+			"item": [
+				{
+					"name": "Cobranca Imediata",
+					"item": [
+						{
+							"name": "Criar cobrança imediata​",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript"
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"// CÓDIGO PARA GERAÇÃO DE txid, sinta-se a vontade para remover ou não.",
+											"// Função para gerar um ID aleatório de 26 a 35 caracteres",
+											"function geratxid(minLength, maxLength) {",
+											"    var characters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';",
+											"    var idLength = Math.floor(Math.random() * (maxLength - minLength + 1)) + minLength;",
+											"    var result = '';",
+											"    for (var i = 0; i < idLength; i++) {",
+											"        result += characters.charAt(Math.floor(Math.random() * characters.length));",
+											"    }",
+											"    return result;",
+											"}",
+											" ",
+											"// Gerar o ID aleatório",
+											"var txid = geratxid(26, 35);",
+											" ",
+											"// Armazenar o ID na variável 'txid' para ser usado no endpoint",
+											"pm.environment.set('txid', txid);",
+											"console.log(\"Codigo txid: \" + txid);"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{your_access_token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"calendario\": {\n        \"expiracao\": 172800\n    },\n    \"devedor\": {\n        \"cnpj\": \"{{cnpj}}\",\n        \"nome\": \"Jussara Ferreira da Silva\"\n    },\n    \"valor\": {\n        \"original\": \"100.00\",\n        \"modalidadeAlteracao\": 1\n    },\n    \"chave\": \"{{sua_chave_pix}}\",\n    \"solicitacaoPagador\": \"Serviço realizado.\",\n    \"infoAdicionais\": [\n        {\n            \"nome\": \"Campo 1\",\n            \"valor\": \"Informação Adicional1 do PSP-Recebedor\"\n        },\n        {\n            \"nome\": \"Campo 2\",\n            \"valor\": \"Informação Adicional2 do PSP-Recebedor\"\n        }\n    ]\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "https://baas-api.c6bank.info/v2/pix/cob/{{txid}}",
+									"protocol": "https",
+									"host": [
+										"baas-api",
+										"c6bank",
+										"info"
+									],
+									"path": [
+										"v2",
+										"pix",
+										"cob",
+										"{{txid}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Revisar cobrança imediata​",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript"
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "PATCH",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{your_access_token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"devedor\": {\n        \"cpf\": \"36243738892\",\n        \"nome\": \"Francisca Aparecida Navegantes\"\n    },\n    \"valor\": {\n        \"original\": \"200.01\"\n    },\n    \"solicitacaoPagador\": \"Cobrança de serviços prestados no ano de 2025.\"\n     \n\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "https://baas-api.c6bank.info/v2/pix/cob/{{txid}}",
+									"protocol": "https",
+									"host": [
+										"baas-api",
+										"c6bank",
+										"info"
+									],
+									"path": [
+										"v2",
+										"pix",
+										"cob",
+										"{{txid}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Consultar cobrança imediata​",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{your_access_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "https://baas-api.c6bank.info/v2/pix/cob/{{txid}}",
+									"protocol": "https",
+									"host": [
+										"baas-api",
+										"c6bank",
+										"info"
+									],
+									"path": [
+										"v2",
+										"pix",
+										"cob",
+										"{{txid}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Criar cobrança imediata​ sem txid",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript"
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{your_access_token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"calendario\": {\n        \"expiracao\": 172800\n    },\n    \"devedor\": {\n        \"cnpj\": \"{{cnpj}}\",\n        \"nome\": \"Empresa de Serviços SA\"\n    },\n    \"valor\": {\n        \"original\": \"100.02\",\n        \"modalidadeAlteracao\": 1\n    },\n    \"chave\": \"{{chavepix_baas}}\",\n    \"solicitacaoPagador\": \"Serviço realizado.\",\n    \"infoAdicionais\": [\n        {\n            \"nome\": \"Campo 1\",\n            \"valor\": \"Informação Adicional1 do PSP-Recebedor\"\n        },\n        {\n            \"nome\": \"Campo 2\",\n            \"valor\": \"Informação Adicional2 do PSP-Recebedor\"\n        }\n    ]\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "https://baas-api.c6bank.info/v2/pix/cob/",
+									"protocol": "https",
+									"host": [
+										"baas-api",
+										"c6bank",
+										"info"
+									],
+									"path": [
+										"v2",
+										"pix",
+										"cob",
+										""
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Consultar lista de cobranças imediatas​",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{your_access_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "https://baas-api.c6bank.info/v2/pix/cob?inicio=2025-09-26T00:00:00&fim=2025-09-26T23:59:59",
+									"protocol": "https",
+									"host": [
+										"baas-api",
+										"c6bank",
+										"info"
+									],
+									"path": [
+										"v2",
+										"pix",
+										"cob"
+									],
+									"query": [
+										{
+											"key": "inicio",
+											"value": "2025-09-26T00:00:00"
+										},
+										{
+											"key": "fim",
+											"value": "2025-09-26T23:59:59"
+										}
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Cobrança com vencimento",
+					"item": [
+						{
+							"name": "Criar cobrança com vencimento​",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript"
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"// CÓDIGO PARA GERAÇÃO DE txid, sinta-se a vontade para remover ou não.",
+											"// Função para gerar um ID aleatório de 26 a 35 caracteres",
+											"function geratxid(minLength, maxLength) {",
+											"    var characters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';",
+											"    var idLength = Math.floor(Math.random() * (maxLength - minLength + 1)) + minLength;",
+											"    var result = '';",
+											"    for (var i = 0; i < idLength; i++) {",
+											"        result += characters.charAt(Math.floor(Math.random() * characters.length));",
+											"    }",
+											"    return result;",
+											"}",
+											" ",
+											"// Gerar o ID aleatório",
+											"var txid = geratxid(26, 35);",
+											" ",
+											"// Armazenar o ID na variável 'txid' para ser usado no endpoint",
+											"pm.environment.set('txid', txid);",
+											"",
+											"",
+											" ",
+											"console.log(\"Codigo txid: \" + txid);"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{your_access_token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"calendario\": {\n        \"dataDeVencimento\": \"2026-12-30\",\n        \"validadeAposVencimento\": 30\n    },\n    \"devedor\": {\n        \"nome\": \"LOURENCO RIBEIRO \",\n        \"cnpj\": \"{{cnpj}}\",\n        \"logradouro\": \"R CAPITAO NELSON PEREIRA\",\n        \"cidade\": \"PELOTAS\",\n        \"uf\": \"RS\",\n        \"cep\": \"96085080\"\n    },\n    \"valor\": {\n        \"original\": \"151.00\",\n        \"multa\": {\n            \"modalidade\": 2,\n            \"valorPerc\": \"5.00\"\n        },\n        \"juros\": {\n            \"modalidade\": 2,\n            \"valorPerc\": \"11.00\"\n        }\n    },\n    \"chave\": \"{{chavepix_baas}}\",\n    \"solicitacaoPagador\": \"Cobrança dos serviços prestados.\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "https://baas-api.c6bank.info/v2/pix/cobv/{{txid}}",
+									"protocol": "https",
+									"host": [
+										"baas-api",
+										"c6bank",
+										"info"
+									],
+									"path": [
+										"v2",
+										"pix",
+										"cobv",
+										"{{txid}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Revisar cobrança com vencimento​",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript"
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "PATCH",
+								"header": [
+									{
+										"key": "person_Id",
+										"value": "123",
+										"type": "text"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{your_access_token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"devedor\": {\n        \"logradouro\": \"Alameda Souza, Numero 80, Bairro Braz\",\n        \"cidade\": \"Recife\",\n        \"uf\": \"PE\",\n        \"cep\": \"70011750\",\n        \"cpf\": \"{{cpf}}\",\n        \"nome\": \"Francisco da Conceição\"\n    },\n    \"valor\": {\n        \"original\": \"299.01\"\n    },\n    \"solicitacaoPagador\": \"Cobrança de serviços prestados.\",\n    \"chave\": \"{{sua_chave_pix}}\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "https://baas-api.c6bank.info/v2/pix/cobv/{{txid}}",
+									"protocol": "https",
+									"host": [
+										"baas-api",
+										"c6bank",
+										"info"
+									],
+									"path": [
+										"v2",
+										"pix",
+										"cobv",
+										"{{txid}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Consultar cobrança com vencimento​",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{your_access_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "https://baas-api.c6bank.info/v2/pix/cobv/{{txid}}",
+									"protocol": "https",
+									"host": [
+										"baas-api",
+										"c6bank",
+										"info"
+									],
+									"path": [
+										"v2",
+										"pix",
+										"cobv",
+										"{{txid}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Consultar lista de cobranças com vencimento​",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"",
+											"var jsonData = pm.response.json();",
+											"",
+											"",
+											"pm.test(\"Validando Status Code\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											" ",
+											"pm.test(\"Resposta contém 'parametros' e 'cobs'\", function () {",
+											"    pm.expect(jsonData).to.have.property(\"parametros\");",
+											"    pm.expect(jsonData).to.have.property(\"cobs\");",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "person_Id",
+										"value": "123",
+										"type": "text"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{your_access_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "https://baas-api.c6bank.info/v2/pix/cobv?inicio=2025-09-24T00:00:00&fim=2025-09-24T23:59:59",
+									"protocol": "https",
+									"host": [
+										"baas-api",
+										"c6bank",
+										"info"
+									],
+									"path": [
+										"v2",
+										"pix",
+										"cobv"
+									],
+									"query": [
+										{
+											"key": "inicio",
+											"value": "2025-09-24T00:00:00"
+										},
+										{
+											"key": "fim",
+											"value": "2025-09-24T23:59:59"
+										}
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Cobrança em lote",
+					"item": [
+						{
+							"name": "Criar/Alterar lote de cobranças com vencimento​",
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{your_access_token}}"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"descricao\": \"Cobranças dos alunos do turno vespertino\",\n  \"cobsv\": [\n    {\n      \"calendario\": {\n        \"dataDeVencimento\": \"2025-12-31\",\n        \"validadeAposVencimento\": 30\n      },\n      \"txid\": \"{{txid}}\",\n      \"devedor\": {\n        \"logradouro\": \"Alameda Souza, Numero 80, Bairro Braz\",\n        \"cidade\": \"Recife\",\n        \"uf\": \"PE\",\n        \"cep\": \"70011750\",\n        \"cpf\": {{cpf}},\n        \"nome\": \"João Souza\"\n      },\n      \"valor\": {\n        \"original\": \"100.00\"\n      },\n      \"chave\": \"{{sua_chave_pix}}\",\n      \"solicitacaoPagador\": \"Informar matrícula\"\n    },\n    {\n      \"calendario\": {\n        \"dataDeVencimento\": \"2025-12-31\",\n        \"validadeAposVencimento\": 30\n      },\n      \"txid\": \"7978c0c97ea847e78e8849634473c1f1\",\n      \"loc\": {\n        \"id\": 57221\n      },\n      \"devedor\": {\n        \"logradouro\": \"Rua 15, Numero 1, Bairro Campo Grande\",\n        \"cidade\": \"Recife\",\n        \"uf\": \"PE\",\n        \"cep\": \"70055751\",\n        \"cpf\": \"15311295449\",\n        \"nome\": \"Manoel Silva\"\n      },\n      \"valor\": {\n        \"original\": \"100.00\"\n      },\n      \"chave\": \"{sua_chave_pix}\",\n      \"solicitacaoPagador\": \"Informar matrícula\"\n    }\n  ]\n}"
+								},
+								"url": {
+									"raw": "https://baas-api.c6bank.info/v2/pix/lotecobv/{{txid}}",
+									"protocol": "https",
+									"host": [
+										"baas-api",
+										"c6bank",
+										"info"
+									],
+									"path": [
+										"v2",
+										"pix",
+										"lotecobv",
+										"{{txid}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Revisar cobr espec dentro de um lote de cobr com venc",
+							"request": {
+								"method": "PATCH",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{your_access_token}}"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"cobsv\": [\n    {\n      \"calendario\": {\n        \"dataDeVencimento\": \"2025-01-10\"\n      },\n      \"txid\": \"{{txid}}\",\n      \"valor\": {\n        \"original\": \"110.00\"\n      }\n    },\n    {\n      \"calendario\": {\n        \"dataDeVencimento\": \"2025-01-10\"\n      },\n      \"txid\": \"{{txid}}\",\n      \"valor\": {\n        \"original\": \"110.00\"\n      }\n    }\n  ]\n}"
+								},
+								"url": {
+									"raw": "https://baas-api.c6bank.info/v2/pix/lotecobv/{{txid}}",
+									"protocol": "https",
+									"host": [
+										"baas-api",
+										"c6bank",
+										"info"
+									],
+									"path": [
+										"v2",
+										"pix",
+										"lotecobv",
+										"{{txid}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Consultar  lote específico de cobr com venc​",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{your_access_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "https://baas-api.c6bank.info/v2/pix/lotecobv/{{txid}}",
+									"protocol": "https",
+									"host": [
+										"baas-api",
+										"c6bank",
+										"info"
+									],
+									"path": [
+										"v2",
+										"pix",
+										"lotecobv",
+										"{{txid}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Consultar lotes de cobranças com venc",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{your_access_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "https://baas-api.c6bank.info/v2/pix/lotecobv?inicio=2025-09-24T00:00:00&fim=2025-09-25T23:59:00",
+									"protocol": "https",
+									"host": [
+										"baas-api",
+										"c6bank",
+										"info"
+									],
+									"path": [
+										"v2",
+										"pix",
+										"lotecobv"
+									],
+									"query": [
+										{
+											"key": "inicio",
+											"value": "2025-09-24T00:00:00"
+										},
+										{
+											"key": "fim",
+											"value": "2025-09-25T23:59:00"
+										}
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Gerenciar URLs de cobrança",
+					"item": [
+						{
+							"name": "Criar location do payload cob",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript"
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{your_access_token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"tipoCob\": \"cob\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "https://baas-api.c6bank.info/v2/pix/loc/",
+									"protocol": "https",
+									"host": [
+										"baas-api",
+										"c6bank",
+										"info"
+									],
+									"path": [
+										"v2",
+										"pix",
+										"loc",
+										""
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Consultar locations cadastradas cob",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{your_access_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "https://baas-api.c6bank.info/v2/pix/loc?inicio=2025-09-29T00:00:00&fim=2025-09-29T23:59:00",
+									"protocol": "https",
+									"host": [
+										"baas-api",
+										"c6bank",
+										"info"
+									],
+									"path": [
+										"v2",
+										"pix",
+										"loc"
+									],
+									"query": [
+										{
+											"key": "inicio",
+											"value": "2025-09-29T00:00:00"
+										},
+										{
+											"key": "fim",
+											"value": "2025-09-29T23:59:00"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Recuperar location do payload cob",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{your_access_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "https://baas-api.c6bank.info/v2/pix/loc/{{txid}}",
+									"protocol": "https",
+									"host": [
+										"baas-api",
+										"c6bank",
+										"info"
+									],
+									"path": [
+										"v2",
+										"pix",
+										"loc",
+										"{{txid}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Desvincular uma cobrança de uma location",
+							"request": {
+								"method": "DELETE",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{your_access_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "https://baas-api.c6bank.info/v2/pix/loc/{{txid}}/txid",
+									"protocol": "https",
+									"host": [
+										"baas-api",
+										"c6bank",
+										"info"
+									],
+									"path": [
+										"v2",
+										"pix",
+										"loc",
+										"{{txid}}",
+										"txid"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "PIX recebidos",
+					"item": [
+						{
+							"name": "Consultar Pix",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{your_access_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "https://baas-api.c6bank.info/v2/pix/pix/{{e2eid}}",
+									"protocol": "https",
+									"host": [
+										"baas-api",
+										"c6bank",
+										"info"
+									],
+									"path": [
+										"v2",
+										"pix",
+										"pix",
+										"{{e2eid}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Consultar Pix recebidos",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{your_access_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "https://baas-api.c6bank.info/v2/pix/pix?inicio=2025-09-24T00:00:00Z&fim=2025-09-30T23:59:00Z",
+									"protocol": "https",
+									"host": [
+										"baas-api",
+										"c6bank",
+										"info"
+									],
+									"path": [
+										"v2",
+										"pix",
+										"pix"
+									],
+									"query": [
+										{
+											"key": "inicio",
+											"value": "2025-09-24T00:00:00Z"
+										},
+										{
+											"key": "fim",
+											"value": "2025-09-30T23:59:00Z"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Solicitar Devolucao",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{your_access_token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"valor\": \"10.01\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "https://baas-api.c6bank.info/v2/pix/pix/{{e2eid}}/devolucao/{{id_devolucao}}",
+									"protocol": "https",
+									"host": [
+										"baas-api",
+										"c6bank",
+										"info"
+									],
+									"path": [
+										"v2",
+										"pix",
+										"pix",
+										"{{e2eid}}",
+										"devolucao",
+										"{{id_devolucao}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Consultar Devolucao",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{your_access_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "https://baas-api.c6bank.info/v2/pix/pix/{{e2eid}}/devolucao/{{id_devolucao}}",
+									"protocol": "https",
+									"host": [
+										"baas-api",
+										"c6bank",
+										"info"
+									],
+									"path": [
+										"v2",
+										"pix",
+										"pix",
+										"{{e2eid}}",
+										"devolucao",
+										"{{id_devolucao}}"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Notificações (Webhook)",
+					"item": [
+						{
+							"name": "Cadastro WebHooks PIX",
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{your_access_token}}"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"webhookUrl\": \"{{sua_url}}\"\n}"
+								},
+								"url": {
+									"raw": "https://baas-api.c6bank.info/v2/pix/webhook/{{sua_chave_pix}}",
+									"protocol": "https",
+									"host": [
+										"baas-api",
+										"c6bank",
+										"info"
+									],
+									"path": [
+										"v2",
+										"pix",
+										"webhook",
+										"{{sua_chave_pix}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Consulta WebHooks PIX",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{your_access_token}}"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "https://baas-api.c6bank.info/v2/pix/webhook/{{sua_chave_pix}}",
+									"protocol": "https",
+									"host": [
+										"baas-api",
+										"c6bank",
+										"info"
+									],
+									"path": [
+										"v2",
+										"pix",
+										"webhook",
+										"{{sua_chave_pix}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Exclusão WebHooks PIX",
+							"request": {
+								"method": "DELETE",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{your_access_token}}"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "https://baas-api.c6bank.info/v2/pix/webhook/{{sua_chave_pix}}",
+									"protocol": "https",
+									"host": [
+										"baas-api",
+										"c6bank",
+										"info"
+									],
+									"path": [
+										"v2",
+										"pix",
+										"webhook",
+										"{{sua_chave_pix}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Consulta WebHooks PIX",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{your_access_token}}"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "https://baas-api.c6bank.info/v2/pix/webhook",
+									"protocol": "https",
+									"host": [
+										"baas-api",
+										"c6bank",
+										"info"
+									],
+									"path": [
+										"v2",
+										"pix",
+										"webhook"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		}
+	]
+}

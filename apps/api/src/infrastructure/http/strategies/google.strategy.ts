@@ -10,9 +10,16 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     config: ConfigService,
     private readonly googleLogin: GoogleLoginUseCase,
   ) {
+    const clientID = config.get<string>('GOOGLE_CLIENT_ID')?.trim();
+    const clientSecret = config.get<string>('GOOGLE_CLIENT_SECRET')?.trim();
+    if (!clientID || !clientSecret) {
+      console.warn(
+        '[Auth] GOOGLE_CLIENT_ID/SECRET ausentes — login Google desativado. Preencha o .env na raiz do repo.',
+      );
+    }
     super({
-      clientID: config.get<string>('GOOGLE_CLIENT_ID'),
-      clientSecret: config.get<string>('GOOGLE_CLIENT_SECRET'),
+      clientID: clientID || 'dev-google-not-configured',
+      clientSecret: clientSecret || 'dev-google-not-configured',
       callbackURL: config.get<string>(
         'GOOGLE_CALLBACK_URL',
         'http://localhost:3000/api/v1/auth/google/callback',

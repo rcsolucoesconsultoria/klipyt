@@ -1,4 +1,9 @@
 import 'reflect-metadata';
+import * as dotenv from 'dotenv';
+import { resolveEnvPath } from './config/resolve-env-path';
+
+dotenv.config({ path: resolveEnvPath() });
+
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';

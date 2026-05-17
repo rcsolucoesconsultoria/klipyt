@@ -2,8 +2,9 @@ import 'reflect-metadata';
 import { DataSource } from 'typeorm';
 import * as dotenv from 'dotenv';
 import { join } from 'path';
+import { resolveEnvPath } from '../../config/resolve-env-path';
 
-dotenv.config({ path: join(__dirname, '../../../../..', '.env') });
+dotenv.config({ path: resolveEnvPath() });
 
 export const AppDataSource = new DataSource({
   type: 'postgres',

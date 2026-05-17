@@ -11,7 +11,7 @@ import { join } from 'path';
       useFactory: (config: ConfigService) => ({
         type: 'postgres',
         host: config.get('DB_HOST', 'localhost'),
-        port: config.get<number>('DB_PORT', 5432),
+        port: parseInt(String(config.get('DB_PORT', 5433)), 10),
         username: config.get('DB_USER', 'pixgo_admin'),
         password: config.get('DB_PASS', 'pixgo_strong_password'),
         database: config.get('DB_NAME', 'pixgo_prod'),

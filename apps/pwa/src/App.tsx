@@ -6,6 +6,7 @@ const AuthCallbackPage = React.lazy(() => import('./pages/AuthCallbackPage'));
 const MapPage = React.lazy(() => import('./pages/MapPage'));
 const AlbumPage = React.lazy(() => import('./pages/AlbumPage'));
 const WalletPage = React.lazy(() => import('./pages/WalletPage'));
+const UpgradePage = React.lazy(() => import('./pages/UpgradePage'));
 
 const Fallback = () => (
   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#000', color: '#F59E0B', fontSize: 18 }}>
@@ -22,6 +23,7 @@ export default function App() {
         <Route path="/mapa" element={<MapPage />} />
         <Route path="/album" element={<AlbumPage />} />
         <Route path="/carteira" element={<WalletPage />} />
+        <Route path="/ativar-pix" element={<UpgradePage />} />
         <Route path="*" element={<Navigate to="/mapa" replace />} />
       </Routes>
     </React.Suspense>
