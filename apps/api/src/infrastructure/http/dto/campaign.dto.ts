@@ -1,9 +1,11 @@
 import {
+  IsArray,
   IsDateString,
   IsNotEmpty,
   IsNumber,
   IsOptional,
   IsPositive,
+  IsString,
   IsUUID,
   Max,
   Min,
@@ -39,7 +41,7 @@ export class ImportCnpjDto {
   cnpj: string;
 
   @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
   selected_cnpjs?: string[];
 }
-
-import { IsString } from 'class-validator';

@@ -25,6 +25,10 @@ export class FinancialCoinRepository
     };
   }
 
+  async findRawById(id: string): Promise<FinancialCoin | null> {
+    return this.repo.findOne({ where: { id } });
+  }
+
   async findUncollectedByCampaign(campaignId: string): Promise<FinancialCoin[]> {
     return this.repo.find({
       where: { campaign_id: campaignId, collected_by: IsNull() },

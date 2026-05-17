@@ -1,4 +1,6 @@
+import * as crypto from 'crypto';
 import { Body, Controller, Post, UseGuards } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { CurrentUser } from '../decorators/current-user.decorator';
 import { CollectCoinUseCase } from '../../../use-cases/collect/collect-coin.use-case';
@@ -11,9 +13,14 @@ export class CollectController {
   constructor(
     private readonly collectCoin: CollectCoinUseCase,
     private readonly redis: RedisService,
+    private readonly config: ConfigService,
   ) {}
 
-  // RF07: Frontend envia token após assistir vídeo completo
+  /**
+   * RF07 — Frontend chama após assistir o vídeo até o final (onEnded).
+   * Armazena o token no Redis e retorna um collect_token assinado,
+   * para que o cliente não precise conhecer o JWT_SECRET para gerar HMAC.
+   */
   @Post('video-watched')
   async videoWatched(
     @CurrentUser() user: { id: string },
@@ -21,7 +28,15 @@ export class CollectController {
   ) {
     const key = `video:token:${user.id}:${dto.coin_id}`;
     await this.redis.set(key, '1', 300);
-    return { ok: true };
+
+    const timestampMs = Date.now();
+    const secret = this.config.get<string>('JWT_SECRET', 'changeme_in_production');
+    const collectToken = crypto
+      .createHmac('sha256', secret)
+      .update(`${user.id}:${dto.coin_id}:${timestampMs}`)
+      .digest('hex');
+
+    return { collect_token: collectToken, timestamp_ms: timestampMs };
   }
 
   @Post('collect')
