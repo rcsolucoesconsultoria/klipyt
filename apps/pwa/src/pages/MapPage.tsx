@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import 'leaflet/dist/leaflet.css';
 import TeaserBanner from '../components/TeaserBanner';
 import { useSettings } from '../hooks/useSettings';
 import { api } from '../services/api';
@@ -15,9 +16,7 @@ export default function MapPage() {
   useEffect(() => {
     if (!mapRef.current || leafletRef.current) return;
 
-    import('leaflet').then(async (L) => {
-      // @ts-ignore
-      await import('leaflet/dist/leaflet.css');
+    import('leaflet').then((L) => {
       if (!mapRef.current) return;
 
       const map = L.map(mapRef.current, { center: [-23.5505, -46.6333], zoom: 15, zoomControl: false });
