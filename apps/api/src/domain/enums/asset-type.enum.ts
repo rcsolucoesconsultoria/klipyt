@@ -1,0 +1,4 @@
+export enum AssetType {
+  STICKER_PACK = 'STICKER_PACK',
+  FINANCIAL_COIN = 'FINANCIAL_COIN',
+}
