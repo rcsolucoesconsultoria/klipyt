@@ -1,27 +1,38 @@
+# Stack para produção / Coolify — sem portas publicadas no host.
+# Desenvolvimento local: use também docker-compose.local.yml
+#   docker compose -f docker-compose.yaml -f docker-compose.local.yml up -d
+
 services:
   postgres_db:
     image: postgis/postgis:15-3.3-alpine
-    container_name: klipyt_db
     restart: always
-    ports:
-      # Host 5433 evita conflito com PostgreSQL local já na 5432
-      - "5433:5432"
     environment:
-      - POSTGRES_USER=klipyt_admin
-      - POSTGRES_PASSWORD=klipyt_strong_password
-      - POSTGRES_DB=klipyt_prod
+      POSTGRES_USER: ${POSTGRES_USER:-klipyt_admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-klipyt_strong_password}
+      POSTGRES_DB: ${POSTGRES_DB:-klipyt_prod}
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-klipyt_admin} -d ${POSTGRES_DB:-klipyt_prod}",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   redis_cache:
     image: redis:7-alpine
-    container_name: klipyt_redis
     restart: always
-    ports:
-      - "6379:6379"
     command: redis-server --appendonly yes
     volumes:
       - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
 
 volumes:
   postgres_data:

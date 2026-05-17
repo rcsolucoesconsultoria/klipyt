@@ -1,0 +1,13 @@
+# Override apenas para desenvolvimento local (portas no host).
+# Não use este arquivo no Coolify.
+
+services:
+  postgres_db:
+    container_name: klipyt_db
+    ports:
+      - "5433:5432"
+
+  redis_cache:
+    container_name: klipyt_redis
+    ports:
+      - "6379:6379"
