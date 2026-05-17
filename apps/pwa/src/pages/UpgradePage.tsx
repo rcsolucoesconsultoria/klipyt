@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { api } from '../services/api';
+import { upgradeAccount } from '../services/api';
 
 export default function UpgradePage() {
   const [cpf, setCpf] = useState('');
@@ -11,12 +11,14 @@ export default function UpgradePage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setLoading(true); setError('');
+    setLoading(true);
+    setError('');
     try {
-      await api.post('/user/upgrade', { cpf, pix_key: pixKey });
+      await upgradeAccount(cpf, pixKey);
       navigate('/mapa', { replace: true });
     } catch (err: any) {
-      setError(err?.response?.data?.message ?? 'Erro ao ativar Pix Real');
+      const msg = err?.response?.data?.message;
+      setError(Array.isArray(msg) ? msg.join(', ') : msg ?? 'Erro ao ativar Pix Real');
     } finally {
       setLoading(false);
     }
@@ -31,15 +33,23 @@ export default function UpgradePage() {
         <form onSubmit={handleSubmit} style={S.form}>
           <label style={S.label}>CPF</label>
           <input
-            style={S.input} type="text" inputMode="numeric"
-            placeholder="000.000.000-00" value={cpf}
-            onChange={e => setCpf(e.target.value)} required
+            style={S.input}
+            type="text"
+            inputMode="numeric"
+            placeholder="000.000.000-00"
+            value={cpf}
+            onChange={(e) => setCpf(e.target.value)}
+            required
           />
           <label style={S.label}>Chave Pix (deve ser o seu CPF)</label>
           <input
-            style={S.input} type="text" inputMode="numeric"
-            placeholder="Apenas números do CPF" value={pixKey}
-            onChange={e => setPixKey(e.target.value)} required
+            style={S.input}
+            type="text"
+            inputMode="numeric"
+            placeholder="Apenas números do CPF"
+            value={pixKey}
+            onChange={(e) => setPixKey(e.target.value)}
+            required
           />
           <p style={S.hint}>A chave Pix deve ser do tipo CPF correspondente ao CPF informado acima (RF05).</p>
           <button type="submit" style={S.btn} disabled={loading}>

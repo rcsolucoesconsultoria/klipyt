@@ -1,16 +1,19 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import 'leaflet/dist/leaflet.css';
 import TeaserBanner from '../components/TeaserBanner';
 import CoinCaptureModal from '../components/CoinCaptureModal';
-import { useSettings } from '../hooks/useSettings';
-import { api } from '../services/api';
+import PackOpenModal from '../components/PackOpenModal';
+import BillboardInteractModal from '../components/BillboardInteractModal';
+import { getMapCoins } from '../services/api';
 
 interface MapPin {
   id: string;
   lat: number;
   lon: number;
-  type: 'PACK' | 'BRONZE' | 'GOLD';
+  type: 'PACK' | 'BRONZE' | 'GOLD' | 'BILLBOARD';
   value?: number;
+  title?: string;
+  density_tier?: string;
 }
 
 export default function MapPage() {
@@ -20,7 +23,44 @@ export default function MapPage() {
   const [pins, setPins] = useState<MapPin[]>([]);
   const [userPos, setUserPos] = useState<{ lat: number; lon: number } | null>(null);
   const [selectedCoin, setSelectedCoin] = useState<MapPin | null>(null);
-  const settings = useSettings();
+  const [selectedPack, setSelectedPack] = useState<MapPin | null>(null);
+  const [selectedBillboard, setSelectedBillboard] = useState<MapPin | null>(null);
+  const [faseAtiva, setFaseAtiva] = useState(false);
+
+  const fetchPins = useCallback(async (lat: number, lon: number) => {
+    try {
+      const data = await getMapCoins(lat, lon);
+      setFaseAtiva(Boolean(data.fase_monetizacao_ativa));
+
+      const coinPins: MapPin[] = (data.coins ?? []).map((c) => ({
+        id: c.id,
+        lat: c.lat,
+        lon: c.lon,
+        type: c.coin_type === 'GOLD' ? 'GOLD' : 'BRONZE',
+        value: c.value,
+      }));
+
+      const packPins: MapPin[] = (data.packs ?? []).map((p) => ({
+        id: p.id,
+        lat: p.lat,
+        lon: p.lon,
+        type: 'PACK',
+      }));
+
+      const billboardPins: MapPin[] = (data.billboards ?? []).map((b) => ({
+        id: b.id,
+        lat: b.lat,
+        lon: b.lon,
+        type: 'BILLBOARD',
+        title: b.title,
+        density_tier: b.density_tier,
+      }));
+
+      setPins([...coinPins, ...packPins, ...billboardPins]);
+    } catch {
+      setPins([]);
+    }
+  }, []);
 
   useEffect(() => {
     if (!mapRef.current || leafletRef.current) return;
@@ -46,15 +86,13 @@ export default function MapPage() {
             setUserPos({ lat, lon });
             map.setView([lat, lon], 16);
 
-            // Marcador do usuário
             const userIcon = L.divIcon({
-              html: '<div style="width:16px;height:16px;background:#3B82F6;border:3px solid #fff;border-radius:50%;box-shadow:0 0 0 4px rgba(59,130,246,0.3)"></div>',
+              html: '<div style="width:16px;height:16px;background:#3B82F6;border:3px solid #fff;border-radius:50%"></div>',
               className: '',
               iconSize: [16, 16],
               iconAnchor: [8, 8],
             });
             L.marker([lat, lon], { icon: userIcon }).addTo(map);
-
             fetchPins(lat, lon);
           },
           () => fetchPins(-23.5505, -46.6333),
@@ -67,36 +105,8 @@ export default function MapPage() {
       leafletRef.current?.remove();
       leafletRef.current = null;
     };
-  }, []);
+  }, [fetchPins]);
 
-  async function fetchPins(lat: number, lon: number) {
-    try {
-      if (settings.fase_monetizacao_ativa) {
-        const { data } = await api.get(`/map/layers?lat=${lat}&lon=${lon}`);
-        const coinPins: MapPin[] = (data.coins ?? []).map((c: any) => ({
-          id: c.id,
-          lat: c.lat,
-          lon: c.lon,
-          type: c.coin_type === 'GOLD' ? ('GOLD' as const) : ('BRONZE' as const),
-          value: c.value,
-        }));
-        setPins(coinPins);
-      } else {
-        const { data } = await api.get(`/album/packs/nearby?lat=${lat}&lon=${lon}`);
-        const packPins: MapPin[] = (data.packs ?? []).map((p: any) => ({
-          id: p.id,
-          lat: p.lat,
-          lon: p.lon,
-          type: 'PACK' as const,
-        }));
-        setPins(packPins);
-      }
-    } catch {
-      /* não autenticado — sem pins */
-    }
-  }
-
-  // Re-renderiza marcadores sempre que os pins mudam
   useEffect(() => {
     const map = leafletRef.current;
     if (!map) return;
@@ -107,30 +117,36 @@ export default function MapPage() {
 
       for (const pin of pins) {
         const emoji =
-          pin.type === 'GOLD' ? '🏆' : pin.type === 'BRONZE' ? '🪙' : '📦';
+          pin.type === 'GOLD'
+            ? '🏆'
+            : pin.type === 'BRONZE'
+              ? '🪙'
+              : pin.type === 'BILLBOARD'
+                ? '🪧'
+                : '📦';
+
         const label =
-          pin.type !== 'PACK'
-            ? `<div style="font-size:11px;color:#F59E0B;font-weight:700;text-align:center;margin-top:2px">R$ ${pin.value?.toFixed(2)}</div>`
-            : '';
+          pin.type === 'BRONZE' || pin.type === 'GOLD'
+            ? `<div style="font-size:11px;color:#F59E0B;font-weight:700;text-align:center">R$ ${pin.value?.toFixed(2)}</div>`
+            : pin.type === 'BILLBOARD'
+              ? `<div style="font-size:10px;color:#93C5FD;text-align:center">${pin.title ?? 'Outdoor'}</div>`
+              : '';
 
         const icon = L.divIcon({
-          html: `<div style="text-align:center"><span style="font-size:30px;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.6))">${emoji}</span>${label}</div>`,
+          html: `<div style="text-align:center"><span style="font-size:30px">${emoji}</span>${label}</div>`,
           className: '',
-          iconSize: [44, 48],
-          iconAnchor: [22, 48],
+          iconSize: [44, 56],
+          iconAnchor: [22, 56],
         });
 
         const marker = L.marker([pin.lat, pin.lon], { icon }).addTo(map);
 
-        // RF07: clique no marcador de moeda abre o fluxo de captura
-        if (pin.type !== 'PACK') {
+        if (pin.type === 'GOLD' || pin.type === 'BRONZE') {
           marker.on('click', () => setSelectedCoin(pin));
-          marker.bindTooltip(
-            `${pin.type === 'GOLD' ? 'Baú de Ouro' : 'Moeda Bronze'} · R$ ${pin.value?.toFixed(2)}`,
-            { permanent: false, direction: 'top' },
-          );
-        } else {
-          marker.bindPopup('📦 Pacote de figurinhas grátis! Aproxime-se para abrir.');
+        } else if (pin.type === 'PACK') {
+          marker.on('click', () => setSelectedPack(pin));
+        } else if (pin.type === 'BILLBOARD') {
+          marker.on('click', () => setSelectedBillboard(pin));
         }
 
         markersRef.current.push(marker);
@@ -138,22 +154,57 @@ export default function MapPage() {
     });
   }, [pins]);
 
+  function refreshMap() {
+    if (userPos) fetchPins(userPos.lat, userPos.lon);
+  }
+
   return (
     <div style={{ height: '100vh', position: 'relative' }}>
-      <TeaserBanner visible={!settings.fase_monetizacao_ativa} context="map" />
-
+      <TeaserBanner visible={!faseAtiva} context="map" />
       <div ref={mapRef} style={{ width: '100%', height: '100%' }} />
 
-      {/* RF07: Modal de captura com vídeo + WebAR */}
-      {selectedCoin && selectedCoin.type !== 'PACK' && userPos && (
+      {selectedCoin && userPos && (selectedCoin.type === 'GOLD' || selectedCoin.type === 'BRONZE') && (
         <CoinCaptureModal
-          coin={{ ...selectedCoin, value: selectedCoin.value ?? 0, coin_type: selectedCoin.type as 'BRONZE' | 'GOLD' }}
+          coin={{
+            id: selectedCoin.id,
+            lat: selectedCoin.lat,
+            lon: selectedCoin.lon,
+            value: selectedCoin.value ?? 0,
+            coin_type: selectedCoin.type,
+          }}
           userLat={userPos.lat}
           userLon={userPos.lon}
           onClose={() => {
             setSelectedCoin(null);
-            // Re-busca pins para remover moeda coletada
-            if (userPos) fetchPins(userPos.lat, userPos.lon);
+            refreshMap();
+          }}
+        />
+      )}
+
+      {selectedPack && (
+        <PackOpenModal
+          packId={selectedPack.id}
+          onClose={() => {
+            setSelectedPack(null);
+            refreshMap();
+          }}
+        />
+      )}
+
+      {selectedBillboard && userPos && (
+        <BillboardInteractModal
+          billboard={{
+            id: selectedBillboard.id,
+            lat: selectedBillboard.lat,
+            lon: selectedBillboard.lon,
+            title: selectedBillboard.title ?? 'Outdoor',
+            density_tier: selectedBillboard.density_tier ?? 'PRATA',
+          }}
+          userLat={userPos.lat}
+          userLon={userPos.lon}
+          onClose={() => {
+            setSelectedBillboard(null);
+            refreshMap();
           }}
         />
       )}
@@ -161,6 +212,7 @@ export default function MapPage() {
       <nav style={S.nav}>
         <a href="/mapa" style={S.navActive}>🗺️ Mapa</a>
         <a href="/album" style={S.navItem}>📖 Álbum</a>
+        <a href="/marketplace" style={S.navItem}>🏪 Loja</a>
         <a href="/carteira" style={S.navItem}>👛 Carteira</a>
       </nav>
     </div>
@@ -173,11 +225,11 @@ const S: Record<string, React.CSSProperties> = {
     display: 'flex', background: '#111', borderTop: '1px solid #333',
   },
   navItem: {
-    flex: 1, textAlign: 'center', padding: '14px 0',
-    color: '#9CA3AF', textDecoration: 'none', fontSize: 12,
+    flex: 1, textAlign: 'center', padding: '12px 0',
+    color: '#9CA3AF', textDecoration: 'none', fontSize: 11,
   },
   navActive: {
-    flex: 1, textAlign: 'center', padding: '14px 0',
-    color: '#F59E0B', textDecoration: 'none', fontSize: 12, fontWeight: 700,
+    flex: 1, textAlign: 'center', padding: '12px 0',
+    color: '#F59E0B', textDecoration: 'none', fontSize: 11, fontWeight: 700,
   },
 };

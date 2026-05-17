@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { setToken } from '../services/auth-token';
 
 export default function AuthCallbackPage() {
   const navigate = useNavigate();
@@ -7,9 +8,15 @@ export default function AuthCallbackPage() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const token = params.get('token');
+    const status = params.get('status');
+
     if (token) {
-      localStorage.setItem('pixgo_token', token);
-      navigate('/mapa', { replace: true });
+      setToken(token);
+      if (status && status !== 'VERIFIED') {
+        navigate('/ativar-pix', { replace: true });
+      } else {
+        navigate('/mapa', { replace: true });
+      }
     } else {
       navigate('/login', { replace: true });
     }

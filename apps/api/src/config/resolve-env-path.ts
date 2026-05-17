@@ -1,7 +1,7 @@
 import { existsSync } from 'fs';
 import { join } from 'path';
 
-/** Localiza `.env` na raiz do monorepo (pixgo), mesmo rodando de `apps/api`. */
+/** Localiza `.env` na raiz do monorepo (KLIPYT), mesmo rodando de `apps/api`. */
 export function resolveEnvPath(): string {
   let dir = process.cwd();
   for (let i = 0; i < 6; i++) {

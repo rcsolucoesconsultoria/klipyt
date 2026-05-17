@@ -6,7 +6,7 @@ import { UpgradeAccountUseCase } from '../../../use-cases/user/upgrade-account.u
 import { TOKENS } from '../../../use-cases/tokens';
 import { UpgradeAccountDto } from '../dto/upgrade.dto';
 
-@Controller('user')
+@Controller(['user', 'users'])
 @UseGuards(JwtAuthGuard)
 export class UserController {
   constructor(

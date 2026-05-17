@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import StickerCard from '../components/StickerCard';
 import TradePinModal from '../components/TradePinModal';
-import { api, redeemCoupon } from '../services/api';
+import { getMyStickers } from '../services/api';
 
 interface UserSticker {
   id: string;
@@ -23,29 +23,21 @@ export default function AlbumPage() {
   const [showPinModal, setShowPinModal] = useState(false);
 
   useEffect(() => {
-    api.get('/user/me').then(() => {
-      // After verifying auth, we'd fetch user stickers — placeholder for now
-      setLoading(false);
-    }).catch(() => setLoading(false));
+    getMyStickers()
+      .then(setStickers)
+      .catch(() => setStickers([]))
+      .finally(() => setLoading(false));
   }, []);
 
-  async function handleRedeem(qrToken: string) {
-    try {
-      const result = await redeemCoupon(qrToken);
-      alert(`✅ ${result.message} (${result.discount_percent}% desconto)`);
-    } catch (err: any) {
-      alert(err?.response?.data?.message ?? 'Erro ao resgatar cupom');
-    }
-  }
-
   const totalSlots = 30;
-  const collectedIds = new Set(stickers.map((s) => s.sticker.id));
 
   return (
     <div style={styles.container}>
       <div style={styles.header}>
         <h1 style={styles.title}>Álbum da Copa</h1>
-        <span style={styles.progress}>{stickers.length}/{totalSlots}</span>
+        <span style={styles.progress}>
+          {loading ? '…' : `${stickers.length}/${totalSlots}`}
+        </span>
       </div>
       <p style={styles.subtitle}>Visite os estabelecimentos parceiros para colecionar</p>
 
@@ -59,7 +51,7 @@ export default function AlbumPage() {
             image_url={us.sticker.image_url}
             has_reward={us.sticker.has_reward}
             qr_token={us.qr_token}
-            onRedeem={handleRedeem}
+            onRedeem={() => {}}
           />
         ))}
 
@@ -71,7 +63,7 @@ export default function AlbumPage() {
       </div>
 
       <div style={styles.fab}>
-        <button style={styles.tradePinBtn} onClick={() => setShowPinModal(true)}>
+        <button type="button" style={styles.tradePinBtn} onClick={() => setShowPinModal(true)}>
           🔄 Usar PIN de Troca
         </button>
       </div>
@@ -79,9 +71,9 @@ export default function AlbumPage() {
       {showPinModal && (
         <TradePinModal
           onClose={() => setShowPinModal(false)}
-          onSuccess={(stickerId) => {
+          onSuccess={() => {
             setShowPinModal(false);
-            alert(`Figurinha recebida com sucesso! ID: ${stickerId}`);
+            getMyStickers().then(setStickers);
           }}
         />
       )}
@@ -89,6 +81,7 @@ export default function AlbumPage() {
       <nav style={styles.bottomNav}>
         <a href="/mapa" style={styles.navItem}>🗺️ Mapa</a>
         <a href="/album" style={styles.navItemActive}>📖 Álbum</a>
+        <a href="/marketplace" style={styles.navItem}>🏪 Loja</a>
         <a href="/carteira" style={styles.navItem}>👛 Carteira</a>
       </nav>
     </div>
@@ -112,9 +105,8 @@ const styles: Record<string, React.CSSProperties> = {
   tradePinBtn: {
     padding: '12px 24px', background: '#1d4ed8', color: '#fff',
     border: 'none', borderRadius: 24, fontSize: 14, fontWeight: 600, cursor: 'pointer',
-    boxShadow: '0 4px 16px rgba(29,78,216,0.4)',
   },
   bottomNav: { position: 'fixed', bottom: 0, left: 0, right: 0, display: 'flex', background: '#111', borderTop: '1px solid #333' },
-  navItem: { flex: 1, textAlign: 'center', padding: '14px 0', color: '#9CA3AF', textDecoration: 'none', fontSize: 12 },
-  navItemActive: { flex: 1, textAlign: 'center', padding: '14px 0', color: '#F59E0B', textDecoration: 'none', fontSize: 12, fontWeight: 700 },
+  navItem: { flex: 1, textAlign: 'center', padding: '12px 0', color: '#9CA3AF', textDecoration: 'none', fontSize: 11 },
+  navItemActive: { flex: 1, textAlign: 'center', padding: '12px 0', color: '#F59E0B', textDecoration: 'none', fontSize: 11, fontWeight: 700 },
 };

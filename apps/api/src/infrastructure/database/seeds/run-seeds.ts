@@ -8,6 +8,7 @@ import { AppDataSource } from '../data-source';
 import { seedPlatformSettings } from './platform-settings.seed';
 import { seedEstablishments } from './establishments.seed';
 import { seedStickers } from './stickers.seed';
+import { seedBillboards } from './billboards.seed';
 import Redis from 'ioredis';
 
 async function run() {
@@ -19,6 +20,7 @@ async function run() {
   await seedPlatformSettings(AppDataSource);
   await seedEstablishments(AppDataSource, redis);
   await seedStickers(AppDataSource);
+  await seedBillboards(AppDataSource, redis);
 
   await redis.quit();
   console.log('Seeds concluídos.');

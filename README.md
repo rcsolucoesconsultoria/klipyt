@@ -1,8 +1,9 @@
-# Pix GO — Plataforma Drive-to-Store com Pix
+# KLIPYT — Rede de Mídia e Engajamento Urbano
 
+**Domínio:** [klipyt.com](https://klipyt.com)  
 **Stack:** NestJS + TypeORM + PostGIS + Redis | React PWA + Vite + Leaflet | Docker Compose
 
-Plataforma georreferenciada que combina **álbum digital (Fase 1)**, **moedas com Pix real (Fase 2+)** e **portal B2B** para lojistas. Especificação completa nos documentos abaixo.
+Rede social urbana georreferenciada que combina **álbum digital (Fase 1)**, **moedas com Pix real (Fase 2+)**, **marketplace P2P**, **outdoors virtuais DOOH** e **portal B2B** para lojistas.
 
 ---
 
@@ -79,7 +80,7 @@ npm run test:e2e
 ## Estrutura do Repositório
 
 ```
-pixgo/
+klipyt/
 ├── apps/
 │   ├── api/                    # NestJS (porta 3000)
 │   └── pwa/                    # React PWA (porta 5173)

@@ -78,7 +78,7 @@ export class WithdrawPixUseCase {
         pixKeyType: 'CPF',
         pixKeyValue: user.pix_key,
         idempotencyKey,
-        description: `Saque Pix GO - usuário ${userId}`,
+        description: `Saque KLIPYT - usuário ${userId}`,
       });
 
       if (result.endToEndId) {

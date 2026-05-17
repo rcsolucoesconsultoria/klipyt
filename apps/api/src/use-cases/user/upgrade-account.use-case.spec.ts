@@ -1,6 +1,9 @@
 import { UpgradeAccountUseCase } from './upgrade-account.use-case';
 import { UserStatus } from '../../domain/enums/user-status.enum';
-import { BadRequestException, ForbiddenException } from '@nestjs/common';
+import {
+  BadRequestException,
+  UnprocessableEntityException,
+} from '@nestjs/common';
 
 const mockUserRepo = {
   findById: jest.fn(),
@@ -10,6 +13,10 @@ const mockUserRepo = {
 
 const mockBureau = {
   lookupCpf: jest.fn(),
+};
+
+const mockJwt = {
+  sign: jest.fn().mockReturnValue('new-jwt-token'),
 };
 
 describe('UpgradeAccountUseCase (UC02)', () => {
@@ -26,7 +33,11 @@ describe('UpgradeAccountUseCase (UC02)', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    useCase = new UpgradeAccountUseCase(mockUserRepo as any, mockBureau as any);
+    useCase = new UpgradeAccountUseCase(
+      mockUserRepo as any,
+      mockBureau as any,
+      mockJwt as any,
+    );
     mockUserRepo.findById.mockResolvedValue(baseUser);
     mockUserRepo.save.mockImplementation((u) => Promise.resolve(u));
   });
@@ -58,7 +69,7 @@ describe('UpgradeAccountUseCase (UC02)', () => {
 
     await expect(
       useCase.execute({ userId: 'user-1', rawCpf: '529.982.247-25', pixKey: '52998224725' }),
-    ).rejects.toThrow(ForbiddenException);
+    ).rejects.toThrow(UnprocessableEntityException);
   });
 
   it('rejeita quando chave Pix não é o CPF (RF05)', async () => {

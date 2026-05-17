@@ -43,8 +43,21 @@ export class FinancialCoinRepository
   async markCollected(coinId: string, userId: string): Promise<void> {
     await this.repo.update(coinId, {
       collected_by: userId,
+      owner_user_id: userId,
       collected_at: new Date(),
     });
+  }
+
+  async setOwner(coinId: string, userId: string): Promise<void> {
+    await this.repo.update(coinId, { owner_user_id: userId });
+  }
+
+  async transferOwner(coinId: string, fromUserId: string, toUserId: string): Promise<boolean> {
+    const result = await this.repo.update(
+      { id: coinId, owner_user_id: fromUserId },
+      { owner_user_id: toUserId },
+    );
+    return (result.affected ?? 0) > 0;
   }
 
   async distanceMeters(coinId: string, lat: number, lon: number): Promise<number> {
@@ -67,6 +80,26 @@ export class FinancialCoinRepository
       [campaignId],
     );
     return row ? parseFloat(row.total) : 0;
+  }
+
+  async findOwnedTradeable(userId: string) {
+    const rows = await this.repo.query(
+      `SELECT fc.id, fc.value, fc.is_qualified, fc.campaign_id
+       FROM financial_coins fc
+       WHERE fc.owner_user_id = $1
+         AND NOT EXISTS (
+           SELECT 1 FROM marketplace_orders mo
+           WHERE mo.coin_id = fc.id AND mo.status = 'LISTED'
+         )
+       ORDER BY fc.collected_at DESC NULLS LAST`,
+      [userId],
+    );
+    return rows.map((r: any) => ({
+      id: r.id,
+      value: parseFloat(r.value),
+      is_qualified: r.is_qualified,
+      campaign_id: r.campaign_id,
+    }));
   }
 
   async getEstablishmentIdByCoin(coinId: string): Promise<string | null> {

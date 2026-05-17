@@ -1,4 +1,4 @@
-# Índice de Prompts por Fase — Pix GO
+# Índice de Prompts por Fase — KLIPYT
 
 Execute **na ordem**. Cada arquivo é autocontido para colar no Cursor Composer.
 

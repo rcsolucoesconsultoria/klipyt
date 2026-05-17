@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import VideoPlayer from './VideoPlayer';
 import WebARCapture from './WebARCapture';
 import { api } from '../services/api';
@@ -40,6 +41,7 @@ export default function CoinCaptureModal({
   userLon,
   onClose,
 }: CoinCaptureModalProps) {
+  const navigate = useNavigate();
   const [step, setStep] = useState<Step>('proximity');
   const [distance, setDistance] = useState(0);
   const [videoUrl, setVideoUrl] = useState('');
@@ -96,7 +98,13 @@ export default function CoinCaptureModal({
       setCreditedValue(data.credited);
       setStep('success');
     } catch (err: any) {
-      setErrorMsg(err?.response?.data?.message ?? 'Erro ao capturar moeda');
+      const status = err?.response?.status;
+      const msg = err?.response?.data?.message ?? 'Erro ao capturar moeda';
+      if (status === 403 && String(msg).toLowerCase().includes('pix real')) {
+        navigate('/ativar-pix');
+        return;
+      }
+      setErrorMsg(msg);
       setStep('error');
     }
   }

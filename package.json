@@ -1,5 +1,5 @@
 {
-  "name": "pixgo",
+  "name": "klipyt",
   "private": true,
   "workspaces": [
     "apps/*",

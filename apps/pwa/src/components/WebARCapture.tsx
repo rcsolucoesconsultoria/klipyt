@@ -84,7 +84,7 @@ export default function WebARCapture({ coinValue, onCapture, onError }: WebARCap
       const coinMesh = new THREE.Mesh(coinGeo, coinMat);
       scene.add(coinMesh);
 
-      /* ── Face com canvas 2D (texto PIX GO + valor) ── */
+      /* ── Face com canvas 2D (texto KLIPYT + valor) ── */
       const fc = document.createElement('canvas');
       fc.width = fc.height = 512;
       const ctx = fc.getContext('2d')!;
@@ -95,9 +95,8 @@ export default function WebARCapture({ coinValue, onCapture, onError }: WebARCap
       ctx.beginPath(); ctx.arc(256, 256, 256, 0, Math.PI * 2); ctx.fill();
       ctx.strokeStyle = '#8B6914'; ctx.lineWidth = 14; ctx.stroke();
       ctx.fillStyle = '#3d2600';
-      ctx.font = 'bold 110px Arial Black'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText('PIX', 256, 170);
-      ctx.font = 'bold 80px Arial Black'; ctx.fillText('GO', 256, 275);
+      ctx.font = 'bold 72px Arial Black'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('KLIPYT', 256, 220);
       ctx.font = 'bold 58px Arial'; ctx.fillStyle = '#1a0d00';
       ctx.fillText(`R$ ${coinValue.toFixed(2)}`, 256, 385);
 

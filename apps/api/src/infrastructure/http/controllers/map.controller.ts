@@ -17,9 +17,9 @@ export class MapController {
     private readonly campaigns: ICampaignRepository,
   ) {}
 
-  @Get('layers')
+  @Get(['layers', 'coins'])
   getLayers(
-    @CurrentUser() user: { id: string; faixa_etaria?: string },
+    @CurrentUser() user: { id: string; faixa_etaria?: string | null },
     @Query('lat') lat: string,
     @Query('lon') lon: string,
   ) {

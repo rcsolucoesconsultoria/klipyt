@@ -8,7 +8,7 @@ export default function LoginPage() {
 
   return (
     <div style={S.page}>
-      <h1 style={S.title}>PIX GO</h1>
+      <h1 style={S.title}>KLIPYT</h1>
       <p style={S.sub}>Portal Lojista</p>
       <button style={S.btn} onClick={handleGoogle}>Entrar com Google (PJ)</button>
     </div>

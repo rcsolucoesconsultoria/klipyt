@@ -25,9 +25,18 @@ export interface PackMapItem {
   lon: number;
 }
 
+export interface BillboardMapItem {
+  id: string;
+  lat: number;
+  lon: number;
+  title: string;
+  density_tier: string;
+}
+
 export interface MapLayersResult {
   coins: CoinMapItem[];
   packs: PackMapItem[];
+  billboards: BillboardMapItem[];
   fase_monetizacao_ativa: boolean;
 }
 
@@ -94,7 +103,27 @@ export class GetMapLayersUseCase {
       }
     }
 
-    return { coins, packs, fase_monetizacao_ativa: faseAtiva };
+    const billboards: BillboardMapItem[] = [];
+    const billboardIds = await this.redis.geosearch(
+      'billboards:geo',
+      input.lon,
+      input.lat,
+      RADIUS_KM,
+    );
+    for (const billboardId of billboardIds) {
+      const pos = await this.redis.geopos('billboards:geo', billboardId);
+      if (!pos) continue;
+      const meta = await this.redis.hgetall(`billboard:${billboardId}:meta`);
+      billboards.push({
+        id: billboardId,
+        lat: pos[1],
+        lon: pos[0],
+        title: meta.title ?? 'Outdoor',
+        density_tier: meta.density_tier ?? 'PRATA',
+      });
+    }
+
+    return { coins, packs, billboards, fase_monetizacao_ativa: faseAtiva };
   }
 
   private async getCoinMeta(coinId: string) {

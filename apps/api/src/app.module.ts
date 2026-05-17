@@ -21,6 +21,10 @@ import { UserSticker } from './domain/entities/user-sticker.entity';
 import { UnifiedCollection } from './domain/entities/unified-collection.entity';
 import { WalletTransaction } from './domain/entities/wallet-transaction.entity';
 import { PlatformSetting } from './domain/entities/platform-setting.entity';
+import { CoinCatalog } from './domain/entities/coin-catalog.entity';
+import { VirtualBillboard } from './domain/entities/virtual-billboard.entity';
+import { BillboardRental } from './domain/entities/billboard-rental.entity';
+import { MarketplaceOrder } from './domain/entities/marketplace-order.entity';
 
 import { GeoValidatorService } from './domain/services/geo-validator.service';
 import { RarityRollerService } from './domain/services/rarity-roller.service';
@@ -37,6 +41,10 @@ import { CampaignRepository } from './infrastructure/database/repositories/campa
 import { FinancialCoinRepository } from './infrastructure/database/repositories/financial-coin.repository';
 import { MerchantWalletRepository } from './infrastructure/database/repositories/merchant-wallet.repository';
 import { WalletTransactionRepository } from './infrastructure/database/repositories/wallet-transaction.repository';
+import { CoinCatalogRepository } from './infrastructure/database/repositories/coin-catalog.repository';
+import { VirtualBillboardRepository } from './infrastructure/database/repositories/virtual-billboard.repository';
+import { BillboardRentalRepository } from './infrastructure/database/repositories/billboard-rental.repository';
+import { MarketplaceOrderRepository } from './infrastructure/database/repositories/marketplace-order.repository';
 
 import { BureauApiService } from './infrastructure/external/bureau-api.service';
 import { CnpjApiService } from './infrastructure/external/cnpj-api.service';
@@ -60,6 +68,16 @@ import { GetMapLayersUseCase } from './use-cases/map/get-map-layers.use-case';
 import { CollectCoinUseCase } from './use-cases/collect/collect-coin.use-case';
 import { ImportCnpjBranchesUseCase } from './use-cases/establishment/import-cnpj-branches.use-case';
 import { WithdrawPixUseCase } from './use-cases/wallet/withdraw-pix.use-case';
+import { EmitCoinsUseCase } from './use-cases/coin/emit-coins.use-case';
+import { ListMarketplaceUseCase } from './use-cases/marketplace/list-marketplace.use-case';
+import { CreateMarketplaceListingUseCase } from './use-cases/marketplace/create-marketplace-listing.use-case';
+import { PurchaseMarketplaceOrderUseCase } from './use-cases/marketplace/purchase-marketplace-order.use-case';
+import { MarketplacePaymentService } from './use-cases/marketplace/marketplace-payment.service';
+import { GetMarketplaceChargeStatusUseCase } from './use-cases/marketplace/get-marketplace-charge-status.use-case';
+import { ConfirmMarketplaceChargeUseCase } from './use-cases/marketplace/confirm-marketplace-charge.use-case';
+import { GetMyMarketplaceCoinsUseCase } from './use-cases/marketplace/get-my-marketplace-coins.use-case';
+import { RentBillboardUseCase } from './use-cases/billboard/rent-billboard.use-case';
+import { InteractBillboardUseCase } from './use-cases/billboard/interact-billboard.use-case';
 
 import { HealthController } from './infrastructure/http/controllers/health.controller';
 import { AuthController } from './infrastructure/http/controllers/auth.controller';
@@ -73,6 +91,9 @@ import { CollectController } from './infrastructure/http/controllers/collect.con
 import { WalletController } from './infrastructure/http/controllers/wallet.controller';
 import { WebhookController } from './infrastructure/http/controllers/webhook.controller';
 import { AdminController } from './infrastructure/http/controllers/admin.controller';
+import { CoinController } from './infrastructure/http/controllers/coin.controller';
+import { MarketplaceController } from './infrastructure/http/controllers/marketplace.controller';
+import { BillboardController } from './infrastructure/http/controllers/billboard.controller';
 
 import { TOKENS } from './use-cases/tokens';
 
@@ -95,12 +116,14 @@ import { TOKENS } from './use-cases/tokens';
     TypeOrmModule.forFeature([
       User, Establishment, MerchantWallet, Campaign, FinancialCoin,
       StickerPack, Sticker, UserSticker, UnifiedCollection, WalletTransaction, PlatformSetting,
+      CoinCatalog, VirtualBillboard, BillboardRental, MarketplaceOrder,
     ]),
   ],
   controllers: [
     HealthController, AuthController, UserController, AlbumController,
     StickerController, SettingsController, MapController, CampaignController,
     CollectController, WalletController, WebhookController, AdminController,
+    CoinController, MarketplaceController, BillboardController,
   ],
   providers: [
     GeoValidatorService, RarityRollerService, SmartBlendingCalculatorService,
@@ -117,6 +140,10 @@ import { TOKENS } from './use-cases/tokens';
     { provide: 'FINANCIAL_COIN_COLLECT', useClass: FinancialCoinRepository },
     { provide: TOKENS.MERCHANT_WALLET_REPOSITORY, useClass: MerchantWalletRepository },
     { provide: TOKENS.WALLET_TRANSACTION_REPOSITORY, useClass: WalletTransactionRepository },
+    { provide: TOKENS.COIN_CATALOG_REPOSITORY, useClass: CoinCatalogRepository },
+    { provide: TOKENS.VIRTUAL_BILLBOARD_REPOSITORY, useClass: VirtualBillboardRepository },
+    { provide: TOKENS.BILLBOARD_RENTAL_REPOSITORY, useClass: BillboardRentalRepository },
+    { provide: TOKENS.MARKETPLACE_ORDER_REPOSITORY, useClass: MarketplaceOrderRepository },
 
     { provide: TOKENS.BUREAU_API, useClass: BureauApiService },
     { provide: TOKENS.CNPJ_API, useClass: CnpjApiService },
@@ -130,6 +157,11 @@ import { TOKENS } from './use-cases/tokens';
     GenerateTradePinUseCase, ConfirmTradePinUseCase, RedeemStickerCouponUseCase,
     CreateCampaignUseCase, UploadCampaignVideoUseCase, GetCampaignAnalyticsUseCase,
     GetMapLayersUseCase, CollectCoinUseCase, ImportCnpjBranchesUseCase, WithdrawPixUseCase,
+    EmitCoinsUseCase, ListMarketplaceUseCase, CreateMarketplaceListingUseCase,
+    MarketplacePaymentService,
+    PurchaseMarketplaceOrderUseCase, GetMarketplaceChargeStatusUseCase,
+    ConfirmMarketplaceChargeUseCase, GetMyMarketplaceCoinsUseCase,
+    RentBillboardUseCase, InteractBillboardUseCase,
   ],
 })
 export class AppModule {}

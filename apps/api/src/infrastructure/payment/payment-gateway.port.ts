@@ -17,11 +17,28 @@ export interface RegisterWebhookResult {
   chavePix: string;
 }
 
+export interface PixChargeInput {
+  amountBrl: number;
+  chargeId: string;
+  description: string;
+  payerUserId: string;
+}
+
+export interface PixChargeResult {
+  chargeId: string;
+  pixCopyPaste: string;
+  qrCodeBase64: string;
+  expiresInSeconds: number;
+}
+
 export interface PaymentGatewayPort {
   /** Saque Pix (UC11). Cobrança/recebimento usa APIs de cob no C6. */
   requestWithdraw(input: PixWithdrawInput): Promise<PixWithdrawResult>;
 
-  /** Cadastra URL do Pix GO no C6 — PUT /v2/pix/webhook/{chave} */
+  /** Cobrança Pix imediata (marketplace UC08). */
+  createCharge(input: PixChargeInput): Promise<PixChargeResult>;
+
+  /** Cadastra URL do KLIPYT no C6 — PUT /v2/pix/webhook/{chave} */
   registerWebhook(webhookUrl: string): Promise<RegisterWebhookResult>;
 }
 

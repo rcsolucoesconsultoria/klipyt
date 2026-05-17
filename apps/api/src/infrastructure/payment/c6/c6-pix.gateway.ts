@@ -7,6 +7,8 @@ import {
 } from './c6-pix.constants';
 import {
   PaymentGatewayPort,
+  PixChargeInput,
+  PixChargeResult,
   PixWithdrawInput,
   PixWithdrawResult,
   RegisterWebhookResult,
@@ -74,6 +76,47 @@ export class C6PixGateway implements PaymentGatewayPort {
 
     this.logger.log(`Webhook C6 registrado: ${webhookUrl} → chave ${chave}`);
     return { webhookUrl, chavePix: chave };
+  }
+
+  /** Cobrança imediata — PUT /v2/pix/cob/{txid} */
+  async createCharge(input: PixChargeInput): Promise<PixChargeResult> {
+    if (!this.accessToken || !this.chavePix) {
+      this.logger.warn('C6 createCharge: credenciais ausentes — retornando payload de demonstração');
+      const copyPaste = `00020126580014br.gov.bcb.pix0136${input.chargeId}520400005303986540${input.amountBrl.toFixed(2)}5802BR5925KLIPYT6009SAO PAULO62070503***6304C6XX`;
+      return {
+        chargeId: input.chargeId,
+        pixCopyPaste: copyPaste,
+        qrCodeBase64: Buffer.from(copyPaste).toString('base64'),
+        expiresInSeconds: 600,
+      };
+    }
+
+    const txid = input.chargeId.replace(/-/g, '').slice(0, 35);
+    const url = `${this.baseUrl}${C6_PIX_PATHS.cob(txid)}`;
+    const res = await fetch(url, {
+      method: 'PUT',
+      headers: this.headers(),
+      body: JSON.stringify({
+        calendario: { expiracao: 600 },
+        valor: { original: input.amountBrl.toFixed(2) },
+        chave: this.chavePix,
+        solicitacaoPagador: input.description,
+      }),
+    });
+
+    if (!res.ok) {
+      const body = await res.text();
+      throw new Error(`C6 createCharge ${res.status}: ${body}`);
+    }
+
+    const data = (await res.json()) as { pixCopiaECola?: string; location?: string };
+    const copyPaste = data.pixCopiaECola ?? '';
+    return {
+      chargeId: input.chargeId,
+      pixCopyPaste: copyPaste,
+      qrCodeBase64: Buffer.from(copyPaste).toString('base64'),
+      expiresInSeconds: 600,
+    };
   }
 
   /**

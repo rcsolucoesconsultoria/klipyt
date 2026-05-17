@@ -23,6 +23,16 @@ export class FinancialCoin {
   @Column({ type: 'uuid', nullable: true })
   campaign_id: string;
 
+  @Column({ type: 'uuid', nullable: true })
+  catalog_id: string | null;
+
+  @Column({ type: 'uuid', nullable: true })
+  owner_user_id: string | null;
+
+  @ManyToOne(() => User, { nullable: true })
+  @JoinColumn({ name: 'owner_user_id' })
+  owner: User | null;
+
   @Column({ type: 'numeric', precision: 10, scale: 2 })
   value: number;
 

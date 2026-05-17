@@ -41,7 +41,12 @@ export class GoogleLoginUseCase {
       });
     }
 
-    const payload = { sub: user.id, email: user.email, status: user.status };
+    const payload = {
+      sub: user.id,
+      email: user.email,
+      status: user.status,
+      faixa_etaria: user.faixa_etaria ?? null,
+    };
     const access_token = this.jwt.sign(payload);
 
     return {

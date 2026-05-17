@@ -10,9 +10,9 @@ export default defineConfig({
       // Desabilita service worker em dev para evitar conflitos com proxy
       devOptions: { enabled: false },
       manifest: {
-        name: 'Pix GO — Caça Pix Real',
-        short_name: 'Pix GO',
-        description: 'Ande pela cidade, aponte a câmera e capture moedas Pix em realidade aumentada!',
+        name: 'KLIPYT — Rede Urbana',
+        short_name: 'KLIPYT',
+        description: 'Rede social urbana georreferenciada: moedas, WebAR, outdoors virtuais e Pix.',
         theme_color: '#0a0a14',
         background_color: '#0a0a14',
         display: 'standalone',

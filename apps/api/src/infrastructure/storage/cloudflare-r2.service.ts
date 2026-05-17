@@ -14,7 +14,7 @@ export class CloudflareR2Service implements IStorageService {
 
   constructor(private readonly config: ConfigService) {
     const accountId = config.get<string>('R2_ACCOUNT_ID', '');
-    this.bucket = config.get<string>('R2_BUCKET', 'pixgo-dev');
+    this.bucket = config.get<string>('R2_BUCKET', 'klipyt-dev');
     this.publicUrl = config.get<string>('R2_PUBLIC_URL', 'http://localhost:9000');
 
     this.client = new S3Client({

@@ -1,6 +1,4 @@
 import { DataSource } from 'typeorm';
-import { Establishment } from '../../../domain/entities/establishment.entity';
-import { StickerPack } from '../../../domain/entities/sticker-pack.entity';
 import Redis from 'ioredis';
 
 const MOCK_ESTABLISHMENTS = [
@@ -30,49 +28,46 @@ const MOCK_ESTABLISHMENTS = [
   },
 ];
 
-function pointGeom(lon: number, lat: number): string {
-  return `SRID=4326;POINT(${lon} ${lat})`;
-}
-
 export async function seedEstablishments(
   dataSource: DataSource,
   redis?: Redis,
 ): Promise<void> {
-  const estRepo = dataSource.getRepository(Establishment);
-  const packRepo = dataSource.getRepository(StickerPack);
-
   for (const data of MOCK_ESTABLISHMENTS) {
-    const existing = await estRepo.findOne({ where: { cnpj: data.cnpj } });
+    const [existing] = await dataSource.query(
+      `SELECT id FROM establishments WHERE cnpj = $1 LIMIT 1`,
+      [data.cnpj],
+    );
 
     if (existing) {
-      const pack = await packRepo.findOne({ where: { establishment_id: existing.id } });
-      if (redis && pack) {
+      const [pack] = await dataSource.query(
+        `SELECT id FROM sticker_packs WHERE establishment_id = $1 LIMIT 1`,
+        [existing.id],
+      );
+      if (redis && pack?.id) {
         await redis.geoadd('active_packs:geo', data.lon + 0.0001, data.lat + 0.0001, pack.id);
       }
       continue;
     }
 
-    const est = await estRepo.save(
-      estRepo.create({
-        cnpj_root: data.cnpj_root,
-        cnpj: data.cnpj,
-        trade_name: data.trade_name,
-        address_text: data.address_text,
-        geom: pointGeom(data.lon, data.lat),
-        is_active: true,
-      }),
+    const [est] = await dataSource.query(
+      `INSERT INTO establishments (cnpj_root, cnpj, trade_name, address_text, geom, is_active)
+       VALUES ($1, $2, $3, $4, ST_SetSRID(ST_MakePoint($5, $6), 4326), true)
+       RETURNING id`,
+      [data.cnpj_root, data.cnpj, data.trade_name, data.address_text, data.lon, data.lat],
     );
 
-    const pack = await packRepo.save(
-      packRepo.create({
-        establishment_id: est.id,
-        geom: pointGeom(data.lon + 0.0001, data.lat + 0.0001),
-        is_active: true,
-      }),
+    const packLon = data.lon + 0.0001;
+    const packLat = data.lat + 0.0001;
+
+    const [pack] = await dataSource.query(
+      `INSERT INTO sticker_packs (establishment_id, geom, is_active)
+       VALUES ($1, ST_SetSRID(ST_MakePoint($2, $3), 4326), true)
+       RETURNING id`,
+      [est.id, packLon, packLat],
     );
 
-    if (redis) {
-      await redis.geoadd('active_packs:geo', data.lon + 0.0001, data.lat + 0.0001, pack.id);
+    if (redis && pack?.id) {
+      await redis.geoadd('active_packs:geo', packLon, packLat, pack.id);
       console.log(`GEOADD pack ${pack.id} → active_packs:geo`);
     }
 

@@ -10,7 +10,7 @@ export class GeocodingApiService implements IGeocodingApi {
       const encoded = encodeURIComponent(address);
       const url = `https://nominatim.openstreetmap.org/search?q=${encoded}&format=json&limit=1`;
       const res = await fetch(url, {
-        headers: { 'User-Agent': 'PixGO/1.0 (contato@pixgo.com.br)' },
+        headers: { 'User-Agent': 'KLIPYT/1.0 (contato@klipyt.com)' },
       });
       if (!res.ok) return null;
       const data: any[] = await res.json();

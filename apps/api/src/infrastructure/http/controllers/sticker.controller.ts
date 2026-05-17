@@ -10,6 +10,9 @@ export class StickerController {
 
   @Post('redeem')
   redeemHandler(@Body() dto: RedeemCouponDto) {
-    return this.redeem.execute({ qr_token: dto.qr_token });
+    return this.redeem.execute({
+      qr_token: dto.qr_token,
+      establishment_id: dto.establishment_id,
+    });
   }
 }

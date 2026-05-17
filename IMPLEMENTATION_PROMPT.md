@@ -1,4 +1,4 @@
-# 🎯 Prompt Mestre de Implementação — Pix GO
+# 🎯 Prompt Mestre de Implementação — KLIPYT
 
 > **Como usar no Cursor:** Para implementação incremental, use os prompts **por fase** em [`prompts/INDEX.md`](prompts/INDEX.md) (`PROMPT_FASE_00` … `PROMPT_FASE_06`). Este arquivo é a visão mestre; cada prompt de fase é autocontido e proíbe avançar para a fase seguinte. Referencie também `@BRD.md`, `@USE_CASES.md`, `@DATABASE_BLUEPRINT.md` e `@INFRASTRUCTURE.md`.
 
@@ -6,16 +6,14 @@
 
 ## 1. Contexto do Produto
 
-O **Pix GO** é uma plataforma **Drive-to-Store** multitenant que combina:
+O **KLIPYT** ([klipyt.com](https://klipyt.com)) é uma **rede social urbana georreferenciada** que combina:
 
 - **PWA** com mapa georreferenciado em tempo real
-- **WebAR** (Three.js / A-Frame) para captura de recompensas
-- **Play-to-Earn** com liquidação via **Pix** (Banco Central)
-- **B2B:** lojistas compram tráfego físico por orçamento (take rate 40%)
-- **B2C Fase 1:** álbum digital de figurinhas gratuito (Copa) para aquisição viral
-- **B2C Fase 2:** caça a moedas com dinheiro real e saque mínimo de **R$ 6,00**
-
-**Conceito original da conversa:** Pokémon GO + publicidade geolocalizada + Pix instantâneo. Nome alternativo citado: "Caça-Pix".
+- **WebAR** (Three.js) para captura de recompensas e outdoors virtuais
+- **Play-to-Earn** com liquidação via **Pix** (Banco Central / C6 BaaS)
+- **B2B:** lojistas, campanhas, emissão de moedas e locação de outdoors DOOH
+- **B2C Fase 1:** álbum digital de figurinhas gratuito para aquisição viral
+- **B2C Fase 2+:** moedas colecionáveis, marketplace P2P (10%) e saque mínimo **R$ 6,00**
 
 ---
 
@@ -58,7 +56,7 @@ O **Pix GO** é uma plataforma **Drive-to-Store** multitenant que combina:
 Aplicar **Clean Architecture + DDD** rigorosamente. A camada de **Domínio** não importa NestJS, TypeORM, Redis nem HTTP.
 
 ```
-pixgo/
+klipyt/
 ├── apps/
 │   ├── api/                          # NestJS — backend principal
 │   └── pwa/                          # React PWA — usuário final
@@ -391,7 +389,7 @@ JWT_SECRET=
 JWT_EXPIRES_IN=7d
 
 # Database
-DATABASE_URL=postgresql://pixgo_admin:pixgo_strong_password@localhost:5432/pixgo_prod
+DATABASE_URL=postgresql://klipyt_admin:klipyt_strong_password@localhost:5432/klipyt_prod
 
 # Redis
 REDIS_URL=redis://localhost:6379

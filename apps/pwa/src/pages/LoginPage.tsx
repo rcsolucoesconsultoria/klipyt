@@ -10,7 +10,7 @@ export default function LoginPage() {
   return (
     <div style={styles.container}>
       <div style={styles.logo}>
-        <span style={styles.logoText}>PIX GO</span>
+        <span style={styles.logoText}>KLIPYT</span>
         <p style={styles.tagline}>Caça Pix na rua. Ganhe dinheiro real.</p>
       </div>
       <button style={styles.googleBtn} onClick={handleGoogleLogin}>

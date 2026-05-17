@@ -1,0 +1,6 @@
+export enum RentalStatus {
+  RESERVED = 'RESERVED',
+  ACTIVE = 'ACTIVE',
+  CANCELLED = 'CANCELLED',
+  COMPLETED = 'COMPLETED',
+}

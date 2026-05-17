@@ -1,4 +1,11 @@
-# 🐳 Engenharia de Infraestrutura Local — Docker Compose
+# 🐳 Engenharia de Infraestrutura Local — KLIPYT (Docker Compose)
+
+**Domínio:** https://klipyt.com  
+**PostgreSQL host:** `localhost:5433` (mapeamento para 5432 no container)  
+
+---
+
+## docker-compose.yml
 
 ```yaml
 version: '3.8'
@@ -6,26 +13,36 @@ version: '3.8'
 services:
   postgres_db:
     image: postgis/postgis:15-3.3-alpine
-    container_name: pixgo_db
+    container_name: klipyt_db
     restart: always
     ports:
-      - "5433:5432"   # 5433 no host se a 5432 já estiver ocupada
+      - "5433:5432"
     environment:
-      - POSTGRES_USER=pixgo_admin
-      - POSTGRES_PASSWORD=pixgo_strong_password
-      - POSTGRES_DB=pixgo_prod
+      POSTGRES_USER: klipyt_admin
+      POSTGRES_PASSWORD: klipyt_strong_password
+      POSTGRES_DB: klipyt_prod
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U klipyt_admin -d klipyt_prod"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   redis_cache:
     image: redis:7-alpine
-    container_name: pixgo_redis
+    container_name: klipyt_redis
     restart: always
     ports:
       - "6379:6379"
     command: redis-server --appendonly yes
     volumes:
       - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
 
 volumes:
   postgres_data:
@@ -36,42 +53,21 @@ volumes:
 
 ---
 
-## Pix — C6 Bank BaaS
+## Variáveis de conexão recomendadas (.env)
 
-Referência Postman: [`pix-collection.json`](pix-collection.json).
+| Variável | Valor local |
+|----------|-------------|
+| `DATABASE_URL` | `postgresql://klipyt_admin:klipyt_strong_password@localhost:5433/klipyt_prod` |
+| `REDIS_URL` | `redis://localhost:6379` |
+| `APP_DOMAIN` | `https://klipyt.com` |
 
-| Ambiente | Base URL |
-|----------|----------|
-| Sandbox | `https://baas-api-sandbox.c6bank.info` |
-| Produção | `https://baas-api.c6bank.info` |
+---
 
-### Webhook (importante)
+## Comandos úteis
 
-A documentação C6 **não fornece** uma URL fixa para colocar no `.env`. O fluxo é o inverso:
-
-1. Você define a URL **pública do Pix GO** em `PIX_WEBHOOK_URL` (ex.: `https://api.seudominio.com/api/v1/webhooks/pix`).
-2. Cadastra no C6 com **Cadastro WebHooks PIX**:
-
-```http
-PUT {C6_API_BASE_URL}/v2/pix/webhook/{C6_PIX_KEY}
-Authorization: Bearer {C6_ACCESS_TOKEN}
-Content-Type: application/json
-
-{ "webhookUrl": "https://api.seudominio.com/api/v1/webhooks/pix" }
+```bash
+docker compose up -d
+docker compose ps
+docker exec -it klipyt_db psql -U klipyt_admin -d klipyt_prod -c "SELECT PostGIS_Version();"
+docker exec -it klipyt_redis redis-cli PING
 ```
-
-3. O C6 passa a enviar notificações de Pix recebido para essa URL.
-
-Em desenvolvimento local use túnel (ngrok, Cloudflare Tunnel) e atualize `PIX_WEBHOOK_URL` + `API_PUBLIC_URL`.
-
-### Variáveis `.env`
-
-Ver [`.env.example`](.env.example): `PIX_GATEWAY=c6`, `C6_API_BASE_URL`, `C6_PIX_KEY`, `C6_ACCESS_TOKEN`, `PIX_WEBHOOK_URL`, `PIX_WEBHOOK_SECRET`.
-
-### Escopo da collection
-
-- Cobrança imediata/vencimento (`/v2/pix/cob`, `/v2/pix/cobv`)
-- Pix recebidos e devolução (`/v2/pix/pix`)
-- Webhooks (`/v2/pix/webhook`)
-
-Saque outbound (UC11) pode exigir outro produto/API C6 fora desta collection — o adapter em `apps/api/src/infrastructure/payment/c6/` documenta isso.

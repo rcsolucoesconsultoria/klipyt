@@ -8,7 +8,7 @@
 
 ## Objetivo
 
-Entregar a base técnica reproduzível do Pix GO: monorepo, PostgreSQL+PostGIS, Redis, migrations completas, seeds, esqueleto Clean Architecture no NestJS, health check e domínio geoespacial mínimo.
+Entregar a base técnica reproduzível do KLIPYT: monorepo, PostgreSQL+PostGIS, Redis, migrations completas, seeds, esqueleto Clean Architecture no NestJS, health check e domínio geoespacial mínimo.
 
 **Não implementar:** OAuth, mapa, álbum, campanhas, Pix.
 

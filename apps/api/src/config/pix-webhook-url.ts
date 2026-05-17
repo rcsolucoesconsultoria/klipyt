@@ -2,7 +2,7 @@ import { ConfigService } from '@nestjs/config';
 
 /**
  * URL que o C6 chamará (webhookUrl no cadastro PUT /v2/pix/webhook/{chave}).
- * Não é URL do C6 — é endpoint público do Pix GO.
+ * Não é URL do C6 — é endpoint público do KLIPYT.
  */
 export function resolvePixWebhookUrl(config: ConfigService): string {
   const explicit = config.get<string>('PIX_WEBHOOK_URL')?.trim();

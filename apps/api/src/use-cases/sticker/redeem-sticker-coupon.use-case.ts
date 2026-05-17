@@ -1,10 +1,17 @@
-import { ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  ForbiddenException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { RewardStatus } from '../../domain/enums/reward-status.enum';
 import { TOKENS } from '../tokens';
 import { IUserStickerRepository } from '../album/ports/user-sticker-repository.port';
 
 export interface RedeemCouponInput {
   qr_token: string;
+  establishment_id: string;
 }
 
 export interface RedeemCouponResult {
@@ -29,6 +36,16 @@ export class RedeemStickerCouponUseCase {
 
     if (userSticker.reward_status === RewardStatus.REDEEMED) {
       throw new ConflictException('Cupom já utilizado neste estabelecimento');
+    }
+
+    const stickerEstablishmentId = (userSticker as any).sticker?.establishment_id;
+    if (
+      stickerEstablishmentId &&
+      stickerEstablishmentId !== input.establishment_id
+    ) {
+      throw new ForbiddenException(
+        'Cupom inválido para este estabelecimento — valide na filial emissora',
+      );
     }
 
     await this.userStickers.markRedeemed(userSticker.id);

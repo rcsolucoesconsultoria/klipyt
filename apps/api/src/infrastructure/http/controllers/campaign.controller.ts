@@ -36,7 +36,7 @@ export class CampaignController {
     private readonly importCnpj: ImportCnpjBranchesUseCase,
   ) {}
 
-  @Post('campaign/upload-video')
+  @Post(['campaign/upload-video', 'campaigns/upload-video'])
   @UseInterceptors(FileInterceptor('video', { storage: tmpStorage }))
   uploadVideoHandler(@UploadedFile() file: Express.Multer.File) {
     if (!file) return { error: 'Nenhum arquivo enviado' };

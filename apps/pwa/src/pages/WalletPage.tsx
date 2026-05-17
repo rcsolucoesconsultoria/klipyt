@@ -59,6 +59,7 @@ export default function WalletPage() {
       <nav style={S.nav}>
         <a href="/mapa" style={S.navItem}>🗺️ Mapa</a>
         <a href="/album" style={S.navItem}>📖 Álbum</a>
+        <a href="/marketplace" style={S.navItem}>🏪 Loja</a>
         <a href="/carteira" style={S.navActive}>👛 Carteira</a>
       </nav>
     </div>

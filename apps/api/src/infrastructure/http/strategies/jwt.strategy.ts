@@ -8,6 +8,14 @@ export interface JwtPayload {
   sub: string;
   email: string;
   status: UserStatus;
+  faixa_etaria?: string | null;
+}
+
+export interface JwtUser {
+  id: string;
+  email: string;
+  status: UserStatus;
+  faixa_etaria: string | null;
 }
 
 @Injectable()
@@ -23,8 +31,13 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     });
   }
 
-  async validate(payload: JwtPayload) {
+  async validate(payload: JwtPayload): Promise<JwtUser> {
     if (!payload.sub) throw new UnauthorizedException();
-    return { id: payload.sub, email: payload.email, status: payload.status };
+    return {
+      id: payload.sub,
+      email: payload.email,
+      status: payload.status,
+      faixa_etaria: payload.faixa_etaria ?? null,
+    };
   }
 }

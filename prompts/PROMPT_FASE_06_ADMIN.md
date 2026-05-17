@@ -1,7 +1,7 @@
 # PROMPT FASE 6 — Admin, temas e go-live
 
 > **Pré-requisito:** Fases 0–5 completas.  
-> **Esta é a última fase** — após executá-la, o Pix GO deve estar **completo** para go-live controlado.  
+> **Esta é a última fase** — após executá-la, o KLIPYT deve estar **completo** para go-live controlado.  
 > **Referências:** `@BRD.md` (RF17–18, CMS) `@IMPLEMENTATION_PROMPT.md` checklist final
 
 ---
