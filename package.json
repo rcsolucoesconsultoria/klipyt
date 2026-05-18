@@ -8,6 +8,7 @@
   "scripts": {
     "dev:api": "npm run dev --workspace=apps/api",
     "dev:pwa": "npm run dev --workspace=apps/pwa",
+    "dev:portal-pj": "npm run dev --workspace=packages/portal-pj",
     "build:api": "npm run build --workspace=apps/api",
     "build:pwa": "npm run build --workspace=apps/pwa",
     "build:portal-pj": "npm run build --workspace=packages/portal-pj",
@@ -17,7 +18,7 @@
     "migration:run": "npm run migration:run --workspace=apps/api",
     "migration:revert": "npm run migration:revert --workspace=apps/api",
     "db:seed": "npm run db:seed --workspace=apps/api",
-    "docker:up": "docker compose -f docker-compose.yaml -f docker-compose.local.yml up -d",
+    "docker:up": "docker compose -f docker-compose.yaml -f docker-compose.local.yml up -d --build",
     "docker:down": "docker compose -f docker-compose.yaml -f docker-compose.local.yml down"
   }
 }

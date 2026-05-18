@@ -19,7 +19,10 @@ import { join } from 'path';
         migrations: [join(__dirname, './migrations/**/*.{ts,js}')],
         synchronize: false,
         logging: config.get('NODE_ENV') === 'development',
-        ssl: config.get('NODE_ENV') === 'production' ? { rejectUnauthorized: false } : false,
+        ssl:
+          config.get('DB_SSL') === 'true'
+            ? { rejectUnauthorized: false }
+            : false,
       }),
     }),
   ],

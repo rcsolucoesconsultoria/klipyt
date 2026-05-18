@@ -8,14 +8,6 @@ node_modules
 !.env.example
 coverage
 **/*.spec.ts
-# Frontends: só package.json entra no contexto (workspaces npm)
-apps/pwa/src
-apps/pwa/public
-apps/pwa/dist
-apps/pwa/index.html
-packages/portal-pj/src
-packages/portal-pj/dist
-packages/portal-pj/index.html
 prompts
 *.md
 gerar_docs.py

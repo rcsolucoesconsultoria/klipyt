@@ -24,10 +24,16 @@ async function bootstrap() {
 
   app.useGlobalFilters(new HttpExceptionFilter());
 
+  const prodOrigins = [process.env.CLIENT_URL, process.env.PORTAL_URL].filter(
+    (origin): origin is string => Boolean(origin),
+  );
   app.enableCors({
-    origin: process.env.NODE_ENV === 'production'
-      ? ['https://app.klipyt.com', 'https://lojista.klipyt.com']
-      : '*',
+    origin:
+      process.env.NODE_ENV === 'production'
+        ? prodOrigins.length > 0
+          ? prodOrigins
+          : ['https://app.klipyt.com', 'https://lojista.klipyt.com']
+        : '*',
     credentials: true,
   });
 

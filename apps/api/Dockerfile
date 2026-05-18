@@ -28,8 +28,13 @@ RUN npm ci --workspace=@klipyt/api --include-workspace-root --omit=dev
 FROM node:20-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
+RUN apk add --no-cache curl
 COPY --from=prod-deps /app/node_modules ./node_modules
 COPY --from=build /app/apps/api/dist ./dist
 COPY apps/api/package.json ./package.json
+COPY apps/api/docker-entrypoint.sh ./docker-entrypoint.sh
+RUN chmod +x ./docker-entrypoint.sh
 EXPOSE 3000
-CMD ["node", "dist/main.js"]
+HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 \
+  CMD curl -f http://127.0.0.1:3000/api/v1/health || exit 1
+ENTRYPOINT ["./docker-entrypoint.sh"]

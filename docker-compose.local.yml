@@ -11,3 +11,27 @@ services:
     container_name: klipyt_redis
     ports:
       - "6379:6379"
+
+  api:
+    container_name: klipyt_api
+    ports:
+      - "3000:3000"
+    environment:
+      JWT_SECRET: ${JWT_SECRET:-dev-jwt-secret-change-in-production}
+      DB_SSL: "false"
+      CLIENT_URL: http://localhost:5173
+      PORTAL_URL: http://localhost:5174
+      API_PUBLIC_URL: http://localhost:3000
+
+  pwa:
+    container_name: klipyt_pwa
+    ports:
+      - "5173:80"
+
+  portal_pj:
+    container_name: klipyt_portal
+    ports:
+      - "5174:80"
+    build:
+      args:
+        VITE_API_URL: http://localhost:3000/api/v1
