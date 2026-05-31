@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Klipyt MVP</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #C9A84C; --gold-light: #F0D080; --gold-dim: rgba(201,168,76,0.3);
+    --black: #060608; --black2: #0D0D12; --white: #F4F0E8; --white-dim: rgba(244,240,232,0.5);
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { width: 100%; height: 100%; overflow: hidden; background: var(--black); color: var(--white); font-family: 'Syne', sans-serif; }
+
+  .screen { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.4s, transform 0.4s; }
+  .screen.hidden { opacity: 0; pointer-events: none; transform: scale(0.97); }
+
+  /* SPLASH */
+  #splash { gap: 0; background: radial-gradient(ellipse 70% 60% at 25% 35%, rgba(201,168,76,0.07) 0%, transparent 60%), var(--black); }
+  .logo { font-size: 56px; font-weight: 800; letter-spacing: -2px; }
+  .logo span { color: var(--gold); }
+  .tagline { font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 3px; color: var(--white-dim); text-transform: uppercase; margin-top: 10px; }
+  .btn-gold { margin-top: 52px; background: var(--gold); color: var(--black); border: none; padding: 18px 52px; font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; letter-spacing: 1px; border-radius: 2px; cursor: pointer; transition: background 0.2s, transform 0.1s; }
+  .btn-gold:active { transform: scale(0.97); background: var(--gold-light); }
+  .splash-note { margin-top: 18px; font-family: 'DM Mono', monospace; font-size: 11px; color: var(--white-dim); }
+  .splash-note span { color: var(--gold); }
+
+  /* SETUP */
+  #setup { gap: 16px; padding: 40px 24px; overflow-y: auto; background: var(--black); }
+  .setup-step { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 3px; color: var(--gold); text-transform: uppercase; }
+  .setup-title { font-size: 26px; font-weight: 800; letter-spacing: -1px; text-align: center; }
+  .setup-title span { color: var(--gold); }
+  .setup-sub { font-size: 12px; color: var(--white-dim); font-family: 'DM Mono', monospace; text-align: center; line-height: 1.6; }
+  .aura-row { display: flex; gap: 14px; justify-content: center; }
+  .aura-opt { width: 64px; height: 64px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; transition: border-color 0.2s, transform 0.15s; position: relative; }
+  .aura-opt.sel { border-color: var(--gold); transform: scale(1.12); }
+  .aura-opt.sel::after { content:'✓'; position:absolute; bottom:-2px; right:-2px; width:18px; height:18px; background:var(--gold); border-radius:50%; font-size:9px; color:var(--black); display:flex; align-items:center; justify-content:center; font-weight:700; }
+  .a-gold  { background: radial-gradient(circle, #F0D080, #8B6914); }
+  .a-blue  { background: radial-gradient(circle, #80C0FF, #1040A0); }
+  .a-purple{ background: radial-gradient(circle, #D080FF, #600090); }
+  .a-green { background: radial-gradient(circle, #80FFB0, #006030); }
+  .a-red   { background: radial-gradient(circle, #FF8080, #900010); }
+  .setup-input { width: 100%; max-width: 280px; background: rgba(244,240,232,0.06); border: 1px solid rgba(201,168,76,0.25); border-radius: 3px; padding: 14px 16px; font-family: 'DM Mono', monospace; font-size: 14px; color: var(--white); outline: none; text-align: center; letter-spacing: 1px; }
+  .setup-input::placeholder { color: var(--white-dim); }
+  .setup-input:focus { border-color: var(--gold); }
+
+  /* AR */
+  #ar { background: #000; }
+  #video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: none; }
+  #arCanvas { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+
+  .hud-top { position: absolute; top: 0; left: 0; right: 0; padding: 20px 20px 16px; display: flex; justify-content: space-between; align-items: flex-start; background: linear-gradient(to bottom, rgba(6,6,8,0.85), transparent); z-index: 10; }
+  .hud-logo { font-size: 20px; font-weight: 800; letter-spacing: -0.5px; }
+  .hud-logo span { color: var(--gold); }
+  .hud-right { text-align: right; font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 2px; color: var(--gold); }
+  .hud-right .big { font-size: 20px; font-weight: 800; display: block; letter-spacing: -1px; }
+
+  .reticle { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 180px; height: 180px; z-index: 10; pointer-events: none; }
+  .rc { position: absolute; width: 22px; height: 22px; border-color: var(--gold); border-style: solid; opacity: 0.7; }
+  .rc-tl { top:0;left:0;border-width:2px 0 0 2px; } .rc-tr { top:0;right:0;border-width:2px 2px 0 0; }
+  .rc-bl { bottom:0;left:0;border-width:0 0 2px 2px; } .rc-br { bottom:0;right:0;border-width:0 2px 2px 0; }
+  .scan-line { position:absolute; left:2px; right:2px; height:1px; background:linear-gradient(to right, transparent, var(--gold), transparent); animation: scanMove 2.5s ease-in-out infinite; }
+  @keyframes scanMove { 0%,100%{top:6px;opacity:0.3} 50%{top:calc(100% - 6px);opacity:1} }
+  .scan-txt { position:absolute; bottom:-24px; left:50%; transform:translateX(-50%); font-family:'DM Mono',monospace; font-size:9px; letter-spacing:2px; color:var(--gold); white-space:nowrap; opacity:0.7; }
+
+  /* Klip overlay */
+  .klip { position: absolute; z-index: 20; display: flex; flex-direction: column; align-items: center; gap: 4px; opacity: 0; transition: opacity 0.6s ease; pointer-events: none; }
+  .klip.on { opacity: 1; }
+  .klip-ball { width: 76px; height: 76px; border-radius: 50%; position: relative; display: flex; align-items: center; justify-content: center; }
+  .klip-ring { position:absolute; inset:-8px; border-radius:50%; border:1.5px solid; animation: kspin 5s linear infinite; }
+  .klip-ring2 { inset:-16px; animation-duration:9s; animation-direction:reverse; opacity:0.4; }
+  @keyframes kspin { from{transform:rotate(0)} to{transform:rotate(360deg)} }
+  .klip-n { font-size:18px; font-weight:800; color:#fff; z-index:1; text-shadow:0 0 16px rgba(0,0,0,0.9); letter-spacing:-1px; }
+  .klip-connector { width:1px; height:16px; background:linear-gradient(to bottom, var(--gold-dim), transparent); }
+  .klip-card { background:rgba(6,6,8,0.88); border:1px solid var(--gold-dim); border-radius:3px; padding:6px 14px; text-align:center; backdrop-filter:blur(8px); min-width:120px; }
+  .klip-card-name { font-size:12px; font-weight:700; }
+  .klip-card-tier { font-family:'DM Mono',monospace; font-size:8px; letter-spacing:2px; color:var(--gold); text-transform:uppercase; margin-top:2px; }
+
+  /* Camera permission panel */
+  #camPanel { position:absolute; inset:0; z-index:40; background:rgba(6,6,8,0.97); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; padding:40px; text-align:center; }
+  #camPanel.hidden { display:none; }
+  .cam-icon { font-size:44px; }
+  .cam-title { font-size:22px; font-weight:800; letter-spacing:-0.5px; }
+  .cam-desc { font-size:12px; color:var(--white-dim); font-family:'DM Mono',monospace; line-height:1.8; }
+  .cam-step { background:rgba(201,168,76,0.07); border:1px solid var(--gold-dim); border-radius:3px; padding:12px 16px; width:100%; max-width:280px; font-family:'DM Mono',monospace; font-size:11px; color:var(--white-dim); line-height:1.7; text-align:left; }
+  .cam-step strong { color:var(--gold); display:block; margin-bottom:4px; letter-spacing:1px; font-size:10px; }
+  .btn-outline { background:transparent; border:1px solid var(--gold-dim); color:var(--gold); padding:14px 32px; font-family:'Syne',monospace; font-size:13px; font-weight:700; border-radius:2px; cursor:pointer; letter-spacing:1px; transition:background 0.2s; }
+  .btn-outline:active { background:rgba(201,168,76,0.15); }
+
+  /* Toast */
+  .toast { position:absolute; top:80px; left:50%; transform:translateX(-50%) translateY(-12px); background:rgba(6,6,8,0.92); border:1px solid var(--gold-dim); border-radius:3px; padding:10px 18px; z-index:30; text-align:center; opacity:0; transition:opacity 0.3s, transform 0.3s; backdrop-filter:blur(10px); white-space:nowrap; pointer-events:none; }
+  .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+  .toast-label { font-family:'DM Mono',monospace; font-size:8px; letter-spacing:2px; color:var(--gold); text-transform:uppercase; }
+  .toast-name { font-size:13px; font-weight:700; margin-top:2px; }
+
+  /* Bottom HUD */
+  .hud-bot { position:absolute; bottom:0; left:0; right:0; padding:16px 20px 28px; background:linear-gradient(to top, rgba(6,6,8,0.9), transparent); z-index:10; display:flex; justify-content:space-between; align-items:flex-end; }
+  .status { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:2px; color:var(--white-dim); text-transform:uppercase; }
+  .dot { display:inline-block; width:6px; height:6px; background:#4CAF50; border-radius:50%; margin-right:5px; animation:blink 2s infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.25} }
+  .hud-btns { display:flex; gap:10px; align-items:center; }
+  .hud-btn { width:46px; height:46px; border-radius:50%; border:1px solid var(--gold-dim); background:rgba(6,6,8,0.85); color:var(--gold); font-size:16px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:background 0.2s, transform 0.1s; backdrop-filter:blur(8px); }
+  .hud-btn:active { transform:scale(0.92); background:rgba(201,168,76,0.2); }
+  .hud-btn-text { background:rgba(6,6,8,0.85); border:1px solid var(--gold-dim); color:var(--gold); padding:10px 14px; font-family:'DM Mono',monospace; font-size:9px; letter-spacing:2px; text-transform:uppercase; border-radius:2px; cursor:pointer; backdrop-filter:blur(8px); transition:background 0.2s; }
+  .hud-btn-text:active { background:rgba(201,168,76,0.15); }
+
+  /* Demo mode bg */
+  #demoBg { position:absolute; inset:0; background:radial-gradient(ellipse 60% 50% at 30% 40%, rgba(201,168,76,0.05),transparent 60%), radial-gradient(ellipse 50% 60% at 70% 60%, rgba(80,40,180,0.04),transparent 60%), #080810; display:none; }
+  #demoBg .demo-txt { position:absolute; bottom:120px; left:50%; transform:translateX(-50%); font-family:'DM Mono',monospace; font-size:9px; letter-spacing:2px; color:rgba(244,240,232,0.12); text-transform:uppercase; text-align:center; line-height:2.2; white-space:nowrap; }
+
+  /* Modal */
+  #myModal { position:absolute; inset:0; z-index:50; background:rgba(6,6,8,0.96); backdrop-filter:blur(20px); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:18px; opacity:0; pointer-events:none; transition:opacity 0.3s; padding:40px 24px; }
+  #myModal.open { opacity:1; pointer-events:all; }
+  .m-close { position:absolute; top:20px; right:20px; width:38px; height:38px; border:1px solid var(--gold-dim); border-radius:50%; color:var(--white-dim); font-size:16px; display:flex; align-items:center; justify-content:center; cursor:pointer; background:none; }
+  .m-aura { width:130px; height:130px; border-radius:50%; position:relative; display:flex; align-items:center; justify-content:center; }
+  .m-ring { position:absolute; border-radius:50%; border:1px solid; animation:kspin 6s linear infinite; }
+  .m-ring1 { inset:-12px; } .m-ring2 { inset:-24px; animation-duration:11s; animation-direction:reverse; opacity:0.4; } .m-ring3 { inset:-38px; animation-duration:16s; opacity:0.2; }
+  .m-num { font-size:32px; font-weight:800; color:#fff; z-index:1; letter-spacing:-2px; }
+  .m-name { font-size:26px; font-weight:800; letter-spacing:-1px; }
+  .m-tier { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:3px; color:var(--gold); text-transform:uppercase; border:1px solid var(--gold-dim); padding:5px 16px; border-radius:2px; }
+  .m-stats { display:flex; gap:1px; background:rgba(244,240,232,0.05); width:100%; max-width:300px; border-radius:3px; overflow:hidden; }
+  .m-stat { flex:1; background:var(--black); padding:14px 6px; text-align:center; }
+  .m-stat-n { font-size:20px; font-weight:800; color:var(--gold); letter-spacing:-1px; }
+  .m-stat-l { font-family:'DM Mono',monospace; font-size:8px; letter-spacing:1px; color:var(--white-dim); text-transform:uppercase; margin-top:3px; }
+</style>
+</head>
+<body>
+
+<!-- SPLASH -->
+<div class="screen" id="splash">
+  <div class="logo">Kli<span>py</span>t</div>
+  <div class="tagline">AR Social Network</div>
+  <button class="btn-gold" onclick="show('setup')">Create My Klip</button>
+  <div class="splash-note" style="margin-top:16px">Member <span>#14</span> · Origin tier awaits</div>
+</div>
+
+<!-- SETUP -->
+<div class="screen hidden" id="setup">
+  <div class="setup-step">Choose your aura</div>
+  <div class="setup-title">What others <span>see</span></div>
+  <div class="setup-sub">Visible in AR when someone scans you</div>
+  <div class="aura-row">
+    <div class="aura-opt a-gold sel" onclick="pickAura(this,'#C9A84C')"></div>
+    <div class="aura-opt a-blue"   onclick="pickAura(this,'#4090E0')"></div>
+    <div class="aura-opt a-purple" onclick="pickAura(this,'#9040D0')"></div>
+    <div class="aura-opt a-green"  onclick="pickAura(this,'#30C060')"></div>
+    <div class="aura-opt a-red"    onclick="pickAura(this,'#D04040')"></div>
+  </div>
+  <div class="setup-step" style="margin-top:4px">Your name</div>
+  <input class="setup-input" id="nameIn" type="text" placeholder="Enter your name" maxlength="20" autocomplete="off"/>
+  <button class="btn-gold" onclick="launch()">Launch AR →</button>
+  <div class="splash-note" style="margin-top:8px;font-size:11px">You'll be member <span>#14</span> · Origin</div>
+</div>
+
+<!-- AR -->
+<div class="screen hidden" id="ar">
+  <div id="demoBg"><div class="demo-txt">DEMO MODE · CAMERA NOT ACTIVE<br>KLIPS ARE SIMULATED</div></div>
+  <video id="video" autoplay playsinline muted></video>
+  <canvas id="arCanvas"></canvas>
+
+  <!-- Camera permission panel -->
+  <div id="camPanel">
+    <div class="cam-icon">📷</div>
+    <div class="cam-title">Enable Camera</div>
+    <div class="cam-desc">Klipyt needs your camera to show<br>AR Klips in the real world.</div>
+    <div class="cam-step">
+      <strong>HOW TO ALLOW ON ANDROID</strong>
+      1. Tap "Allow Camera" below<br>
+      2. When browser asks → tap Allow<br>
+      3. If blocked: browser menu → Site Settings → Camera → Allow
+    </div>
+    <div class="cam-step">
+      <strong>HOW TO ALLOW ON IOS</strong>
+      1. Tap "Allow Camera" below<br>
+      2. Safari will ask → tap Allow<br>
+      3. If blocked: Settings → Safari → Camera → Allow
+    </div>
+    <button class="btn-gold" onclick="startCam()">Allow Camera</button>
+    <button class="btn-outline" onclick="startDemo()">Try Demo Mode</button>
+  </div>
+
+  <!-- Klip overlays -->
+  <div class="klip" id="k1" style="top:22%;left:12%">
+    <div class="klip-ball" style="background:radial-gradient(circle,rgba(201,168,76,0.45),rgba(201,168,76,0.05))">
+      <div class="klip-ring" style="border-color:#C9A84C60"></div>
+      <div class="klip-ring klip-ring2" style="border-color:#C9A84C35"></div>
+      <div class="klip-n">#1</div>
+    </div>
+    <div class="klip-connector"></div>
+    <div class="klip-card"><div class="klip-card-name">Alex R.</div><div class="klip-card-tier">⬡ Origin · Legendary</div></div>
+  </div>
+
+  <div class="klip" id="k2" style="top:28%;right:10%">
+    <div class="klip-ball" style="background:radial-gradient(circle,rgba(64,144,224,0.45),rgba(64,144,224,0.05))">
+      <div class="klip-ring" style="border-color:#4090E060"></div>
+      <div class="klip-ring klip-ring2" style="border-color:#4090E035"></div>
+      <div class="klip-n">#47</div>
+    </div>
+    <div class="klip-connector"></div>
+    <div class="klip-card"><div class="klip-card-name">Mia S.</div><div class="klip-card-tier">⬡ Origin · Legendary</div></div>
+  </div>
+
+  <div class="klip" id="k3" style="top:55%;left:30%">
+    <div class="klip-ball" style="background:radial-gradient(circle,rgba(144,64,208,0.4),rgba(144,64,208,0.05))">
+      <div class="klip-ring" style="border-color:#9040D060"></div>
+      <div class="klip-ring klip-ring2" style="border-color:#9040D035"></div>
+      <div class="klip-n">#312</div>
+    </div>
+    <div class="klip-connector"></div>
+    <div class="klip-card"><div class="klip-card-name">Omar K.</div><div class="klip-card-tier">◎ Rare</div></div>
+  </div>
+
+  <div class="hud-top">
+    <div class="hud-logo">Kli<span>py</span>t</div>
+    <div class="hud-right"><span class="big" id="myNumHud">#14</span>Origin</div>
+  </div>
+
+  <div class="reticle">
+    <div class="rc rc-tl"></div><div class="rc rc-tr"></div>
+    <div class="rc rc-bl"></div><div class="rc rc-br"></div>
+    <div class="scan-line"></div>
+    <div class="scan-txt">SCANNING FOR KLIPS</div>
+  </div>
+
+  <div class="toast" id="toast">
+    <div class="toast-label">Klip detected</div>
+    <div class="toast-name" id="toastTxt">—</div>
+  </div>
+
+  <div class="hud-bot">
+    <div class="status"><span class="dot"></span>AR Live</div>
+    <div class="hud-btns">
+      <button class="hud-btn-text" onclick="openModal()">My Klip</button>
+      <button class="hud-btn" onclick="rescan()" title="Rescan">⬡</button>
+      <button class="hud-btn" onclick="show('setup')" title="Settings">◈</button>
+    </div>
+  </div>
+</div>
+
+<!-- MY KLIP MODAL -->
+<div id="myModal">
+  <button class="m-close" onclick="closeModal()">✕</button>
+  <div class="m-aura" id="mAura">
+    <div class="m-ring m-ring1" id="mR1"></div>
+    <div class="m-ring m-ring2" id="mR2"></div>
+    <div class="m-ring m-ring3" id="mR3"></div>
+    <div class="m-num">#14</div>
+  </div>
+  <div class="m-name" id="mName">Your Name</div>
+  <div class="m-tier">⬡ Origin — Legendary</div>
+  <div class="m-stats">
+    <div class="m-stat"><div class="m-stat-n" id="encN">0</div><div class="m-stat-l">Encounters</div></div>
+    <div class="m-stat"><div class="m-stat-n">14</div><div class="m-stat-l">Member #</div></div>
+    <div class="m-stat"><div class="m-stat-n">1</div><div class="m-stat-l">Territory</div></div>
+  </div>
+  <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;color:var(--white-dim);text-align:center;line-height:1.9">
+    This is what people see<br>when they scan you in AR
+  </div>
+</div>
+
+<script>
+  let auraColor = '#C9A84C', userName = 'You', encounters = 0;
+
+  function show(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+    document.getElementById(id).classList.remove('hidden');
+  }
+
+  function pickAura(el, color) {
+    document.querySelectorAll('.aura-opt').forEach(o => o.classList.remove('sel'));
+    el.classList.add('sel');
+    auraColor = color;
+  }
+
+  function launch() {
+    const n = document.getElementById('nameIn').value.trim();
+    if (n) userName = n;
+    updateModal();
+    show('ar');
+    // Show permission panel
+    document.getElementById('camPanel').classList.remove('hidden');
+  }
+
+  function updateModal() {
+    document.getElementById('mName').textContent = userName;
+    const c = auraColor;
+    document.getElementById('mAura').style.background = `radial-gradient(circle, ${c}50, ${c}08)`;
+    document.getElementById('mR1').style.borderColor = c + '80';
+    document.getElementById('mR2').style.borderColor = c + '40';
+    document.getElementById('mR3').style.borderColor = c + '18';
+  }
+
+  async function startCam() {
+    document.getElementById('camPanel').classList.add('hidden');
+    const video = document.getElementById('video');
+    const demoBg = document.getElementById('demoBg');
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 } },
+        audio: false
+      });
+      video.srcObject = stream;
+      await video.play();
+      video.style.display = 'block';
+      demoBg.style.display = 'none';
+      initCanvas();
+      setTimeout(showKlips, 1500);
+    } catch(e) {
+      console.warn('Camera:', e.message);
+      // Show helpful re-try panel
+      document.getElementById('camPanel').classList.remove('hidden');
+      // Change button text if denied
+      if (e.name === 'NotAllowedError') {
+        document.querySelector('#camPanel .btn-gold').textContent = 'Retry Camera';
+      }
+    }
+  }
+
+  function startDemo() {
+    document.getElementById('camPanel').classList.add('hidden');
+    document.getElementById('demoBg').style.display = 'flex';
+    document.getElementById('video').style.display = 'none';
+    initCanvas();
+    setTimeout(showKlips, 1200);
+  }
+
+  function initCanvas() {
+    const c = document.getElementById('arCanvas');
+    const ctx = c.getContext('2d');
+    c.width = window.innerWidth; c.height = window.innerHeight;
+    window.addEventListener('resize', () => { c.width = window.innerWidth; c.height = window.innerHeight; });
+
+    const pts = Array.from({length:35}, () => ({
+      x: Math.random()*c.width, y: Math.random()*c.height,
+      vx:(Math.random()-.5)*.25, vy:(Math.random()-.5)*.25,
+      r: Math.random()*1.2+.3, o: Math.random()*.25+.04
+    }));
+
+    (function draw() {
+      ctx.clearRect(0,0,c.width,c.height);
+      ctx.strokeStyle='rgba(201,168,76,0.035)'; ctx.lineWidth=1;
+      const g=55;
+      for(let x=0;x<c.width;x+=g){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,c.height);ctx.stroke();}
+      for(let y=0;y<c.height;y+=g){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(c.width,y);ctx.stroke();}
+      pts.forEach(p=>{
+        p.x+=p.vx; p.y+=p.vy;
+        if(p.x<0)p.x=c.width; if(p.x>c.width)p.x=0;
+        if(p.y<0)p.y=c.height; if(p.y>c.height)p.y=0;
+        ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+        ctx.fillStyle=`rgba(201,168,76,${p.o})`; ctx.fill();
+      });
+      requestAnimationFrame(draw);
+    })();
+  }
+
+  const klipData = [
+    {id:'k1', name:'Alex R.', num:'#1'},
+    {id:'k2', name:'Mia S.', num:'#47'},
+    {id:'k3', name:'Omar K.', num:'#312'}
+  ];
+
+  function showKlips() {
+    klipData.forEach((k, i) => {
+      setTimeout(() => {
+        document.getElementById(k.id).classList.add('on');
+        if (i < 2) showToast(k.name, k.num);
+      }, i * 1100);
+    });
+    startAutoScan();
+  }
+
+  function hideKlips() { klipData.forEach(k => document.getElementById(k.id).classList.remove('on')); }
+
+  function rescan() { hideKlips(); setTimeout(showKlips, 500); encounters++; document.getElementById('encN').textContent = encounters; }
+
+  function showToast(name, num) {
+    const t = document.getElementById('toast');
+    document.getElementById('toastTxt').textContent = `${name} — ${num}`;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2800);
+  }
+
+  let autoScanTimer;
+  function startAutoScan() {
+    clearInterval(autoScanTimer);
+    autoScanTimer = setInterval(() => {
+      if (!document.getElementById('myModal').classList.contains('open')) rescan();
+    }, 9000);
+  }
+
+  function openModal() { document.getElementById('myModal').classList.add('open'); }
+  function closeModal() { document.getElementById('myModal').classList.remove('open'); }
+  document.getElementById('myModal').addEventListener('click', function(e){ if(e.target===this) closeModal(); });
+</script>
+</body>
+</html>
