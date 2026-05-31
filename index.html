@@ -330,39 +330,47 @@ var userName    = "You";
 var encounters  = 0;
 var modelReady  = false;
 var currentMode = "face";
-var userLat     = null;
-var userLon     = null;
-var userHeading = 0;
-var headingRaw  = 0;
-var outdoors    = [];
-var nextId      = 1;
-var selDir      = "N";
-var selColor    = "#C9A84C";
-var W = window.innerWidth;
-var H = window.innerHeight;
+var userLat = null, userLon = null;
+var userHeading = 0, headingRaw = 0;
+var outdoors = [], nextId = 1;
+var selDir = "N", selColor = "#C9A84C";
+var W = window.innerWidth, H = window.innerHeight;
+var zoomLevel = 1.0, zoomMin = 0.3, zoomMax = 5.0;
+var pinchStartDist = 0, pinchStartZoom = 1.0;
+var zoomHideTimer = null;
+var focusedOdId = null;
+var tapStartX = 0, tapStartY = 0, isTap = false;
+var odProjections = {};
+var editingId = null;
+var frameCount = 0;
 
-// ── ZOOM STATE ──
-var zoomLevel      = 1.0;   // global zoom multiplier
-var zoomMin        = 0.5;
-var zoomMax        = 4.0;
-var pinchStartDist = 0;
-var pinchStartZoom = 1.0;
-var zoomHideTimer  = null;
-var focusedOdId    = null;  // which outdoor is tapped/focused
-
-// ── CLICK DETECTION ──
-var tapStartX = 0;
-var tapStartY = 0;
-var isTap     = false;
-
-var DIR_BEARING = { N:0, E:90, S:180, W:270 };
-var DIRNAMES    = { N:"Norte", S:"Sul", E:"Leste", W:"Oeste" };
+var DIR_BEARING = {N:0,E:90,S:180,W:270};
+var DIRNAMES    = {N:"Norte",S:"Sul",E:"Leste",W:"Oeste"};
 var AURA_COLORS = ["#C9A84C","#4090E0","#9040D0","#30C060","#D04040"];
-var MEMBERS     = [
-  { num:"#14",  name:"",       tier:"Origin", color:"#C9A84C" },
-  { num:"#47",  name:"Mia S.", tier:"Origin", color:"#4090E0" },
-  { num:"#312", name:"Omar K.",tier:"Rare",   color:"#9040D0" }
+var MEMBERS = [
+  {num:"#14",name:"",tier:"Origin",color:"#C9A84C"},
+  {num:"#47",name:"Mia S.",tier:"Origin",color:"#4090E0"},
+  {num:"#312",name:"Omar K.",tier:"Rare",color:"#9040D0"}
 ];
+
+// ── TIMES SQUARE OUTDOOR PALETTE ──
+// Each outdoor gets a neon scheme: main color + glow + accent
+var NEON_SCHEMES = [
+  {main:"#FF2D55", glow:"rgba(255,45,85,",  accent:"#FF6B8A", bg:"rgba(20,0,5,0.96)"},
+  {main:"#00F5FF", glow:"rgba(0,245,255,",  accent:"#80FAFF", bg:"rgba(0,15,20,0.96)"},
+  {main:"#C9A84C", glow:"rgba(201,168,76,", accent:"#F0D080", bg:"rgba(15,10,0,0.96)"},
+  {main:"#39FF14", glow:"rgba(57,255,20,",  accent:"#AAFFA0", bg:"rgba(0,15,0,0.96)"},
+  {main:"#FF6B35", glow:"rgba(255,107,53,", accent:"#FFAA80", bg:"rgba(20,5,0,0.96)"},
+  {main:"#BF5FFF", glow:"rgba(191,95,255,", accent:"#DFA0FF", bg:"rgba(10,0,20,0.96)"}
+];
+
+function getNeonScheme(color) {
+  var map = {
+    "#C9A84C":2, "#4090E0":1, "#9040D0":5,
+    "#30C060":3, "#FF6B35":4, "#E31937":0
+  };
+  return NEON_SCHEMES[map[color] !== undefined ? map[color] : 2];
+}
 
 // ── NAV ──
 function showScreen(id) {
@@ -370,35 +378,37 @@ function showScreen(id) {
   document.getElementById(id).classList.remove("off");
 }
 
-// ── WIRE BUTTONS ──
-document.getElementById("startBtn").addEventListener("click", function(){ showScreen("setup"); });
+// ── WIRING ──
+document.getElementById("startBtn").addEventListener("click",  function(){ showScreen("setup"); });
 document.getElementById("launchBtn").addEventListener("click", launchAR);
-document.getElementById("camBtn").addEventListener("click", startCam);
-document.getElementById("demoBtn").addEventListener("click", startDemo);
-document.getElementById("klipBtn").addEventListener("click", function(){ document.getElementById("modal").classList.add("open"); });
-document.getElementById("closeModal").addEventListener("click", function(){ document.getElementById("modal").classList.remove("open"); });
-document.getElementById("modal").addEventListener("click", function(e){ if(e.target===this) this.classList.remove("open"); });
-document.getElementById("backBtn").addEventListener("click", function(){ showScreen("setup"); });
-document.getElementById("odBtn").addEventListener("click", openOdPanel);
-document.getElementById("closeOd").addEventListener("click", closeOdPanel);
-document.getElementById("addBtn").addEventListener("click", function(){ openForm(null); });
+document.getElementById("camBtn").addEventListener("click",    startCam);
+document.getElementById("demoBtn").addEventListener("click",   startDemo);
+document.getElementById("klipBtn").addEventListener("click",   function(){ document.getElementById("modal").classList.add("open"); });
+document.getElementById("closeModal").addEventListener("click",function(){ document.getElementById("modal").classList.remove("open"); });
+document.getElementById("modal").addEventListener("click", function(e){ if(e.target===this)this.classList.remove("open"); });
+document.getElementById("backBtn").addEventListener("click",   function(){ showScreen("setup"); });
+document.getElementById("odBtn").addEventListener("click",     openOdPanel);
+document.getElementById("closeOd").addEventListener("click",   closeOdPanel);
+document.getElementById("addBtn").addEventListener("click",    function(){ openForm(null); });
 document.getElementById("cancelBtn").addEventListener("click", closeForm);
-document.getElementById("saveBtn").addEventListener("click", saveOutdoor);
-document.getElementById("modeFace").addEventListener("click", function(){ setMode("face"); });
-document.getElementById("modeOd").addEventListener("click", function(){ setMode("outdoor"); });
-document.getElementById("dcClose").addEventListener("click", closeDetailCard);
-document.getElementById("dcZoomIn").addEventListener("click", function(){ zoomToFocused(); });
+document.getElementById("saveBtn").addEventListener("click",   saveOutdoor);
+document.getElementById("modeFace").addEventListener("click",  function(){ setMode("face"); });
+document.getElementById("modeOd").addEventListener("click",    function(){ setMode("outdoor"); });
+document.getElementById("dcClose").addEventListener("click",   closeDetailCard);
+document.getElementById("dcZoomIn").addEventListener("click",  zoomToFocused);
 document.getElementById("dcEdit").addEventListener("click", function(){
-  if (focusedOdId !== null) { var od = outdoors.find(function(o){ return o.id===focusedOdId; }); if(od){ closeDetailCard(); openOdPanel(); openForm(od); } }
+  if(focusedOdId===null) return;
+  var od=outdoors.find(function(o){ return o.id===focusedOdId; });
+  if(od){ closeDetailCard(); openOdPanel(); openForm(od); }
 });
 document.getElementById("dcDel").addEventListener("click", function(){
-  if (focusedOdId !== null) { deleteOutdoor(focusedOdId); closeDetailCard(); }
+  if(focusedOdId!==null){ deleteOutdoor(focusedOdId); closeDetailCard(); }
 });
 
 // Aura
-for (var _ai=0; _ai<5; _ai++) {
+for(var _ai=0;_ai<5;_ai++){
   (function(i){
-    document.getElementById("a"+i).addEventListener("click", function(){
+    document.getElementById("a"+i).addEventListener("click",function(){
       document.querySelectorAll(".aopt").forEach(function(o){ o.classList.remove("sel"); });
       this.classList.add("sel"); auraColor=AURA_COLORS[i]; MEMBERS[0].color=auraColor;
       document.getElementById("mr1").style.borderColor=auraColor+"80";
@@ -409,25 +419,23 @@ for (var _ai=0; _ai<5; _ai++) {
   })(_ai);
 }
 
-// Direction
 ["N","S","E","W"].forEach(function(d){
-  document.getElementById("d"+d).addEventListener("click", function(){
+  document.getElementById("d"+d).addEventListener("click",function(){
     document.querySelectorAll(".dbtn").forEach(function(b){ b.classList.remove("sel"); });
     this.classList.add("sel"); selDir=d;
   });
 });
 
-// Color dots
-for (var _ci=0; _ci<6; _ci++) {
+for(var _ci=0;_ci<6;_ci++){
   (function(i){
-    document.getElementById("c"+i).addEventListener("click", function(){
+    document.getElementById("c"+i).addEventListener("click",function(){
       document.querySelectorAll(".cdot").forEach(function(b){ b.classList.remove("sel"); });
       this.classList.add("sel"); selColor=this.getAttribute("data-c");
     });
   })(_ci);
 }
 
-function launchAR() {
+function launchAR(){
   var n=document.getElementById("nameIn").value.trim();
   if(n){ userName=n; MEMBERS[0].name=n; }
   document.getElementById("uname").textContent=userName;
@@ -435,40 +443,31 @@ function launchAR() {
   showScreen("ar");
 }
 
-function setMode(m) {
+function setMode(m){
   currentMode=m;
-  document.getElementById("modeFace").classList.toggle("on", m==="face");
-  document.getElementById("modeOd").classList.toggle("on",   m==="outdoor");
+  document.getElementById("modeFace").classList.toggle("on",m==="face");
+  document.getElementById("modeOd").classList.toggle("on",m==="outdoor");
   for(var i=0;i<3;i++){ var c=document.getElementById("fc"+i); if(c) c.style.display=(m==="face")?"":"none"; }
   if(m==="face") closeDetailCard();
-  setStatus(m==="face"?"Face AR - Point at a face":"Outdoor AR - Pinch to zoom");
+  setStatus(m==="face"?"Face AR - Point at a face":"Outdoor AR - Pinch to zoom · Tap to open");
 }
 
-// ── FORM (new + edit) ──
-var editingId = null;
-
-function openForm(od) {
-  editingId = od ? od.id : null;
-  var form = document.getElementById("odForm");
-  form.classList.add("open");
-  document.getElementById("formModeLabel").textContent = od ? "EDIT OUTDOOR" : "NEW OUTDOOR";
-  document.getElementById("saveBtn").textContent = od ? "Save Changes" : "Place Outdoor";
-  if (od) {
-    document.getElementById("fName").value  = od.name;
-    document.getElementById("fMsg").value   = od.msg;
-    document.getElementById("fEmoji").value = od.emoji;
-    document.getElementById("fDist").value  = od.dist;
-    document.getElementById("fTag").value   = od.tag || "";
-    // Set direction
+// ── FORM ──
+function openForm(od){
+  editingId=od?od.id:null;
+  var form=document.getElementById("odForm"); form.classList.add("open");
+  document.getElementById("formModeLabel").textContent=od?"EDIT OUTDOOR":"NEW OUTDOOR";
+  document.getElementById("saveBtn").textContent=od?"Save Changes":"Place Outdoor";
+  if(od){
+    document.getElementById("fName").value=od.name;
+    document.getElementById("fMsg").value=od.msg;
+    document.getElementById("fEmoji").value=od.emoji;
+    document.getElementById("fDist").value=od.dist;
+    document.getElementById("fTag").value=od.tag||"";
     document.querySelectorAll(".dbtn").forEach(function(b){ b.classList.remove("sel"); });
-    var db = document.getElementById("d"+od.dir);
-    if(db){ db.classList.add("sel"); selDir=od.dir; }
-    // Set color
+    var db=document.getElementById("d"+od.dir); if(db){ db.classList.add("sel"); selDir=od.dir; }
     document.querySelectorAll(".cdot").forEach(function(b){ b.classList.remove("sel"); });
-    for(var i=0;i<6;i++){
-      var cd=document.getElementById("c"+i);
-      if(cd && cd.getAttribute("data-c")===od.color){ cd.classList.add("sel"); selColor=od.color; break; }
-    }
+    for(var i=0;i<6;i++){ var cd=document.getElementById("c"+i); if(cd&&cd.getAttribute("data-c")===od.color){ cd.classList.add("sel"); selColor=od.color; break; } }
   } else {
     document.getElementById("fName").value="";
     document.getElementById("fMsg").value="";
@@ -477,56 +476,37 @@ function openForm(od) {
     document.getElementById("fTag").value="";
   }
 }
+function closeForm(){ document.getElementById("odForm").classList.remove("open"); editingId=null; }
 
-function closeForm() {
-  document.getElementById("odForm").classList.remove("open");
-  editingId=null;
-}
-
-function saveOutdoor() {
-  var name  = document.getElementById("fName").value.trim();
-  var msg   = document.getElementById("fMsg").value.trim();
-  var emoji = document.getElementById("fEmoji").value.trim() || "AR";
-  var dist  = parseFloat(document.getElementById("fDist").value)||50;
-  var tag   = document.getElementById("fTag").value.trim() || "AR OUTDOOR";
+function saveOutdoor(){
+  var name=document.getElementById("fName").value.trim();
+  var msg=document.getElementById("fMsg").value.trim();
+  var emoji=document.getElementById("fEmoji").value.trim()||"AR";
+  var dist=parseFloat(document.getElementById("fDist").value)||50;
+  var tag=document.getElementById("fTag").value.trim()||"AR OUTDOOR";
   if(!name){ alert("Enter a name"); return; }
-
-  var bearing = DIR_BEARING[selDir];
-  var lat=null, lon=null;
+  var bearing=DIR_BEARING[selDir];
+  var lat=null,lon=null;
   if(userLat!==null){ var c=coordFromDir(userLat,userLon,bearing,dist); lat=c.lat; lon=c.lon; }
-
-  if (editingId !== null) {
-    // EDIT existing
-    var od = outdoors.find(function(o){ return o.id===editingId; });
-    if(od){
-      od.name=name; od.msg=msg; od.emoji=emoji; od.dist=dist;
-      od.tag=tag; od.color=selColor; od.dir=selDir; od.bearing=bearing;
-      od.lat=lat; od.lon=lon;
-    }
+  if(editingId!==null){
+    var od=outdoors.find(function(o){ return o.id===editingId; });
+    if(od){ od.name=name; od.msg=msg; od.emoji=emoji; od.dist=dist; od.tag=tag; od.color=selColor; od.dir=selDir; od.bearing=bearing; od.lat=lat; od.lon=lon; }
     showToast(name+" updated","Outdoor");
   } else {
-    // NEW
-    outdoors.push({ id:nextId++, name:name, msg:msg, emoji:emoji, dist:dist,
-      tag:tag, color:selColor, dir:selDir, bearing:bearing, lat:lat, lon:lon,
-      zoom:1.0, clicks:0 });
+    outdoors.push({id:nextId++,name:name,msg:msg,emoji:emoji,dist:dist,tag:tag,color:selColor,dir:selDir,bearing:bearing,lat:lat,lon:lon,zoom:1.0,clicks:0,phase:Math.random()*Math.PI*2});
     showToast(name+" placed "+dist+"m "+selDir,"Outdoor");
   }
-
   document.getElementById("odN").textContent=outdoors.length;
-  closeForm();
-  updateOdList();
-  closeOdPanel();
-  setMode("outdoor");
+  closeForm(); updateOdList(); closeOdPanel(); setMode("outdoor");
 }
 
-function deleteOutdoor(id) {
+function deleteOutdoor(id){
   outdoors=outdoors.filter(function(o){ return o.id!==id; });
   document.getElementById("odN").textContent=outdoors.length;
-  updateOdList();
-  showToast("Outdoor removed","Info");
+  updateOdList(); showToast("Removed","Info");
 }
 
-function updateOdList() {
+function updateOdList(){
   var list=document.getElementById("odList");
   list.innerHTML="";
   if(outdoors.length===0){
@@ -536,10 +516,10 @@ function updateOdList() {
   }
   outdoors.forEach(function(od){
     var div=document.createElement("div"); div.className="od-li";
-    var ico=document.createElement("div"); ico.className="od-li-ico"; ico.style.background=od.color+"20"; ico.textContent=od.emoji;
+    var ico=document.createElement("div"); ico.className="od-li-ico"; ico.style.background=od.color+"25"; ico.textContent=od.emoji;
     var inf=document.createElement("div"); inf.className="od-li-inf";
     var br=document.createElement("div"); br.className="od-li-br"; br.style.color=od.color; br.textContent=od.name;
-    var mt=document.createElement("div"); mt.className="od-li-mt"; mt.textContent=od.dist+"m - "+DIRNAMES[od.dir]+" | zoom "+(od.zoom||1).toFixed(1)+"x";
+    var mt=document.createElement("div"); mt.className="od-li-mt"; mt.textContent=od.dist+"m - "+DIRNAMES[od.dir];
     inf.appendChild(br); inf.appendChild(mt);
     var edit=document.createElement("button"); edit.className="od-li-edit"; edit.textContent="E";
     (function(o){ edit.addEventListener("click",function(ev){ ev.stopPropagation(); openForm(o); }); })(od);
@@ -550,285 +530,291 @@ function updateOdList() {
   });
 }
 
-function openOdPanel()  { updateOdList(); document.getElementById("odPanel").classList.add("open"); }
-function closeOdPanel() { document.getElementById("odPanel").classList.remove("open"); }
+function openOdPanel(){ updateOdList(); document.getElementById("odPanel").classList.add("open"); }
+function closeOdPanel(){ document.getElementById("odPanel").classList.remove("open"); }
 
 // ── DETAIL CARD ──
-function openDetailCard(od, dist) {
-  focusedOdId = od.id;
-  document.getElementById("dcTopbar").style.background = od.color;
-  document.getElementById("dcEmoji").textContent  = od.emoji;
-  document.getElementById("dcBrand").style.color  = od.color;
-  document.getElementById("dcBrand").textContent  = od.name;
-  document.getElementById("dcDist").textContent   = Math.round(dist)+"m away - "+DIRNAMES[od.dir];
-  document.getElementById("dcMsg").textContent    = od.msg;
-  document.getElementById("dcDistN").textContent  = Math.round(dist)+"m";
-  document.getElementById("dcDistN").style.color  = od.color;
-  document.getElementById("dcDir").textContent    = od.dir;
-  document.getElementById("dcDir").style.color    = od.color;
-  document.getElementById("dcZoomN").textContent  = (od.zoom||1).toFixed(1)+"x";
-  document.getElementById("dcZoomN").style.color  = od.color;
+function openDetailCard(od,dist){
+  focusedOdId=od.id;
+  document.getElementById("dcTopbar").style.background=od.color;
+  document.getElementById("dcEmoji").textContent=od.emoji;
+  document.getElementById("dcBrand").style.color=od.color;
+  document.getElementById("dcBrand").textContent=od.name;
+  document.getElementById("dcDist").textContent=Math.round(dist)+"m - "+DIRNAMES[od.dir];
+  document.getElementById("dcMsg").textContent=od.msg;
+  document.getElementById("dcDistN").textContent=Math.round(dist)+"m";
+  document.getElementById("dcDistN").style.color=od.color;
+  document.getElementById("dcDir").textContent=od.dir;
+  document.getElementById("dcDir").style.color=od.color;
+  document.getElementById("dcZoomN").textContent=(od.zoom||1).toFixed(1)+"x";
+  document.getElementById("dcZoomN").style.color=od.color;
   document.getElementById("odDetailCard").classList.add("open");
 }
+function closeDetailCard(){ document.getElementById("odDetailCard").classList.remove("open"); focusedOdId=null; }
 
-function closeDetailCard() {
-  document.getElementById("odDetailCard").classList.remove("open");
-  focusedOdId=null;
-}
-
-function zoomToFocused() {
+function zoomToFocused(){
   if(focusedOdId===null) return;
   var od=outdoors.find(function(o){ return o.id===focusedOdId; });
   if(!od) return;
-  od.zoom = Math.min((od.zoom||1)+0.5, 4.0);
-  document.getElementById("dcZoomN").textContent=(od.zoom).toFixed(1)+"x";
+  od.zoom=Math.min((od.zoom||1)+0.5,5.0);
+  document.getElementById("dcZoomN").textContent=od.zoom.toFixed(1)+"x";
   showZoomBar(od.zoom);
-  showToast(od.name+" zoom "+od.zoom.toFixed(1)+"x","Zoom");
 }
 
-// ── PINCH ZOOM (global for outdoor scene) ──
-var cvEl = null;
-function setupPinch() {
-  cvEl = document.getElementById("canvas");
-  cvEl.addEventListener("touchstart", onTouchStart, {passive:false});
-  cvEl.addEventListener("touchmove",  onTouchMove,  {passive:false});
-  cvEl.addEventListener("touchend",   onTouchEnd,   {passive:false});
-}
-
-function onTouchStart(e) {
-  if(currentMode!=="outdoor") return;
-  if(e.touches.length===2){
-    pinchStartDist = Math.hypot(
-      e.touches[0].clientX-e.touches[1].clientX,
-      e.touches[0].clientY-e.touches[1].clientY
-    );
-    pinchStartZoom=zoomLevel;
-  } else if(e.touches.length===1) {
-    tapStartX=e.touches[0].clientX;
-    tapStartY=e.touches[0].clientY;
-    isTap=true;
-  }
-}
-
-function onTouchMove(e) {
-  if(currentMode!=="outdoor") return;
-  if(e.touches.length===2){
-    e.preventDefault();
+// ── PINCH ZOOM ──
+function setupPinch(){
+  var cv=document.getElementById("canvas");
+  cv.addEventListener("touchstart",function(e){
+    if(currentMode!=="outdoor") return;
+    if(e.touches.length===2){
+      pinchStartDist=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
+      pinchStartZoom=zoomLevel;
+    } else if(e.touches.length===1){ tapStartX=e.touches[0].clientX; tapStartY=e.touches[0].clientY; isTap=true; }
+  },{passive:false});
+  cv.addEventListener("touchmove",function(e){
+    if(currentMode!=="outdoor") return;
+    if(e.touches.length===2){
+      e.preventDefault(); isTap=false;
+      var d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
+      zoomLevel=Math.max(zoomMin,Math.min(zoomMax,pinchStartZoom*(d/pinchStartDist)));
+      showZoomBar(zoomLevel);
+    } else if(e.touches.length===1){
+      if(Math.hypot(e.touches[0].clientX-tapStartX,e.touches[0].clientY-tapStartY)>10) isTap=false;
+    }
+  },{passive:false});
+  cv.addEventListener("touchend",function(e){
+    if(currentMode!=="outdoor") return;
+    if(isTap&&e.changedTouches.length===1) handleTap(e.changedTouches[0].clientX,e.changedTouches[0].clientY);
     isTap=false;
-    var d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX, e.touches[0].clientY-e.touches[1].clientY);
-    zoomLevel=Math.max(zoomMin, Math.min(zoomMax, pinchStartZoom*(d/pinchStartDist)));
-    showZoomBar(zoomLevel);
-  } else if(e.touches.length===1){
-    var dx=e.touches[0].clientX-tapStartX, dy=e.touches[0].clientY-tapStartY;
-    if(Math.hypot(dx,dy)>10) isTap=false;
-  }
+  },{passive:false});
+  cv.addEventListener("click",function(e){ if(currentMode==="outdoor") handleTap(e.clientX,e.clientY); });
 }
 
-function onTouchEnd(e) {
-  if(currentMode!=="outdoor") return;
-  if(isTap && e.changedTouches.length===1){
-    handleTap(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
-  }
-  isTap=false;
-}
-
-// Also support mouse click for desktop testing
-document.getElementById("canvas").addEventListener("click", function(e){
-  if(currentMode==="outdoor") handleTap(e.clientX, e.clientY);
-});
-
-function handleTap(tx, ty) {
-  // Check if tap hits any outdoor billboard
+function handleTap(tx,ty){
   var hit=null;
   outdoors.forEach(function(od){
-    var proj=getOdProj(od);
-    if(!proj) return;
-    var bW=proj.bW, bH=proj.bH, bX=proj.bX, bY=proj.bY;
-    if(tx>=bX && tx<=bX+bW && ty>=bY && ty<=bY+bH){ hit=od; }
+    var p=odProjections[od.id]; if(!p) return;
+    if(tx>=p.bX&&tx<=p.bX+p.bW&&ty>=p.bY&&ty<=p.bY+p.bH) hit=od;
   });
-  if(hit){
-    var dist=getOdDist(hit);
-    openDetailCard(hit, dist);
-  } else {
-    closeDetailCard();
-  }
+  if(hit){ openDetailCard(hit,getOdDist(hit)); }
+  else closeDetailCard();
 }
 
-// Cache projected positions for tap detection
-var odProjections = {};
+function getOdDist(od){ return(userLat!==null&&od.lat!==null)?distTo(userLat,userLon,od.lat,od.lon):od.dist; }
+function showZoomBar(z){ var b=document.getElementById("zoomBar"); b.textContent="ZOOM "+z.toFixed(1)+"x"; b.style.opacity="1"; clearTimeout(zoomHideTimer); zoomHideTimer=setTimeout(function(){ b.style.opacity="0"; },1800); }
 
-function getOdProj(od) { return odProjections[od.id] || null; }
-function getOdDist(od) {
-  if(userLat!==null && od.lat!==null) return distTo(userLat,userLon,od.lat,od.lon);
-  return od.dist;
-}
+// ── GPS ──
+function coordFromDir(lat,lon,b,d){ var R=6371000,br=b*Math.PI/180,la=lat*Math.PI/180,lo=lon*Math.PI/180,dr=d/R; var la2=Math.asin(Math.sin(la)*Math.cos(dr)+Math.cos(la)*Math.sin(dr)*Math.cos(br)); var lo2=lo+Math.atan2(Math.sin(br)*Math.sin(dr)*Math.cos(la),Math.cos(dr)-Math.sin(la)*Math.sin(la2)); return{lat:la2*180/Math.PI,lon:lo2*180/Math.PI}; }
+function distTo(a,b,c,d){ var R=6371000,dLa=(c-a)*Math.PI/180,dLo=(d-b)*Math.PI/180; var x=Math.sin(dLa/2)*Math.sin(dLa/2)+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(dLo/2)*Math.sin(dLo/2); return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x)); }
+function bearingBetween(a,b,c,d){ var dL=(d-b)*Math.PI/180,y=Math.sin(dL)*Math.cos(c*Math.PI/180),x=Math.cos(a*Math.PI/180)*Math.sin(c*Math.PI/180)-Math.sin(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.cos(dL); return(Math.atan2(y,x)*180/Math.PI+360)%360; }
 
-function showZoomBar(z) {
-  var bar=document.getElementById("zoomBar");
-  bar.textContent="ZOOM "+z.toFixed(1)+"x";
-  bar.style.opacity="1";
-  clearTimeout(zoomHideTimer);
-  zoomHideTimer=setTimeout(function(){ bar.style.opacity="0"; },1800);
-}
-
-// ── GPS MATH ──
-function coordFromDir(lat,lon,bearingDeg,distM){
-  var R=6371000,b=bearingDeg*Math.PI/180,lat1=lat*Math.PI/180,lon1=lon*Math.PI/180,d=distM/R;
-  var lat2=Math.asin(Math.sin(lat1)*Math.cos(d)+Math.cos(lat1)*Math.sin(d)*Math.cos(b));
-  var lon2=lon1+Math.atan2(Math.sin(b)*Math.sin(d)*Math.cos(lat1),Math.cos(d)-Math.sin(lat1)*Math.sin(lat2));
-  return {lat:lat2*180/Math.PI,lon:lon2*180/Math.PI};
-}
-function distTo(lat1,lon1,lat2,lon2){
-  var R=6371000,dLat=(lat2-lat1)*Math.PI/180,dLon=(lon2-lon1)*Math.PI/180;
-  var a=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)*Math.sin(dLon/2);
-  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
-}
-function bearingBetween(lat1,lon1,lat2,lon2){
-  var dLon=(lon2-lon1)*Math.PI/180,y=Math.sin(dLon)*Math.cos(lat2*Math.PI/180);
-  var x=Math.cos(lat1*Math.PI/180)*Math.sin(lat2*Math.PI/180)-Math.sin(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.cos(dLon);
-  return(Math.atan2(y,x)*180/Math.PI+360)%360;
-}
-
-function worldToScreen(bearing, dist, odZoom) {
-  var rel=(bearing-userHeading+360)%360;
-  if(rel>180) rel-=360;
-  var FOV=60;
-  if(Math.abs(rel)>FOV/2+10) return null;
+function worldToScreen(bearing,dist,odZoom){
+  var rel=(bearing-userHeading+360)%360; if(rel>180) rel-=360;
+  var FOV=60; if(Math.abs(rel)>FOV/2+10) return null;
   var x=W/2+(rel/FOV)*W;
-  var HORIZON_Y=H*0.35, GROUND_Y=H*0.72, MAX_DIST=300;
-  var t=Math.max(0,Math.min(1,dist/MAX_DIST));
-  // Apply zoom: zoom shrinks effective distance
-  var effectiveDist = dist / (zoomLevel * (odZoom||1));
-  var te=Math.max(0,Math.min(1,effectiveDist/MAX_DIST));
-  var scale=1.0-te*0.82;
-  var y=GROUND_Y-t*(GROUND_Y-HORIZON_Y); // Y still based on real dist
-  var opacity=Math.max(0.2, 1.0-te*0.7);
-  return {x:x, y:y, scale:scale, opacity:opacity};
+  var HORIZON=H*0.35,GROUND=H*0.72,MAX=300;
+  var t=Math.max(0,Math.min(1,dist/MAX));
+  var effDist=dist/(zoomLevel*(odZoom||1));
+  var te=Math.max(0,Math.min(1,effDist/MAX));
+  var scale=1.0-te*0.78;
+  var y=GROUND-t*(GROUND-HORIZON);
+  var opacity=Math.max(0.25,1.0-te*0.65);
+  return{x:x,y:y,scale:scale,opacity:opacity};
 }
 
-// ── DRAW OUTDOORS ──
-function drawOutdoors(ctx) {
-  if(currentMode!=="outdoor") return;
-  var sorted=outdoors.slice().sort(function(a,b){ return getOdDist(b)-getOdDist(a); });
-  odProjections={};
-  sorted.forEach(function(od){
-    var bearing = (userLat!==null&&od.lat!==null) ? bearingBetween(userLat,userLon,od.lat,od.lon) : od.bearing;
-    var dist    = getOdDist(od);
-    var odZoom  = od.zoom || 1.0;
-    var proj    = worldToScreen(bearing, dist, odZoom);
-    if(!proj||dist>300) return;
+// ── TIMES SQUARE BILLBOARD DRAW ──
+function drawTimesSquareBillboard(ctx, od, proj, dist, t) {
+  var x=proj.x, y=proj.y, scale=proj.scale, alpha=proj.opacity;
+  var ns=getNeonScheme(od.color);
+  var isFocused=(od.id===focusedOdId);
+  var phase=od.phase||0;
 
-    var x=proj.x, y=proj.y, scale=proj.scale, alpha=proj.opacity;
-    var color=od.color;
-    var isFocused=(od.id===focusedOdId);
+  // Billboard dimensions - wider, more impactful
+  var bW=200*scale, bH=115*scale;
+  var bX=x-bW/2, bY=y-55*scale-bH;
 
-    // Billboard dimensions
-    var bW=170*scale, bH=100*scale;
-    var bX=x-bW/2, bY=y-50*scale-bH;
+  // Store for tap detection
+  odProjections[od.id]={bW:bW,bH:bH,bX:bX,bY:bY};
 
-    // Store for tap detection
-    odProjections[od.id]={bW:bW,bH:bH,bX:bX,bY:bY};
+  ctx.save();
+  ctx.globalAlpha=alpha;
 
-    ctx.save();
-    ctx.globalAlpha=alpha;
+  // ── ATMOSPHERIC GLOW HALO (far-reaching light bloom) ──
+  var haloR=bW*1.2;
+  var halo=ctx.createRadialGradient(x,bY+bH/2,bW*0.1,x,bY+bH/2,haloR);
+  halo.addColorStop(0,ns.glow+"0.18)");
+  halo.addColorStop(0.4,ns.glow+"0.06)");
+  halo.addColorStop(1,"rgba(0,0,0,0)");
+  ctx.beginPath(); ctx.ellipse(x,bY+bH/2,haloR,haloR*0.7,0,0,Math.PI*2);
+  ctx.fillStyle=halo; ctx.fill();
 
-    // ── SHADOW ──
-    var sg=ctx.createRadialGradient(x,y+4*scale,0,x,y+4*scale,40*scale);
-    sg.addColorStop(0,"rgba(0,0,0,0.5)"); sg.addColorStop(1,"rgba(0,0,0,0)");
-    ctx.beginPath(); ctx.ellipse(x,y+4*scale,38*scale,10*scale,0,0,Math.PI*2);
-    ctx.fillStyle=sg; ctx.fill();
+  // ── GROUND LIGHT SPILL (light falling down from billboard) ──
+  var spill=ctx.createLinearGradient(x,y-20*scale,x,y+30*scale);
+  spill.addColorStop(0,ns.glow+"0.15)");
+  spill.addColorStop(1,"rgba(0,0,0,0)");
+  ctx.beginPath(); ctx.ellipse(x,y+10*scale,50*scale,15*scale,0,0,Math.PI*2);
+  ctx.fillStyle=spill; ctx.fill();
 
-    // ── POLE ──
-    var poleH=50*scale, poleW=3*scale;
-    var pg=ctx.createLinearGradient(x,y-poleH,x,y);
-    pg.addColorStop(0,color+"DD"); pg.addColorStop(1,color+"10");
-    ctx.fillStyle=pg; ctx.fillRect(x-poleW/2,y-poleH,poleW,poleH);
+  // ── POLE with neon glow ──
+  var poleH=55*scale, poleW=4*scale;
+  var pg=ctx.createLinearGradient(x,y-poleH,x,y);
+  pg.addColorStop(0,ns.main); pg.addColorStop(1,ns.main+"20");
+  ctx.shadowColor=ns.main; ctx.shadowBlur=12*scale;
+  ctx.fillStyle=pg; ctx.fillRect(x-poleW/2,y-poleH,poleW,poleH);
+  ctx.shadowBlur=0;
 
-    // ── BASE RING ──
-    ctx.beginPath(); ctx.ellipse(x,y,14*scale,5*scale,0,0,Math.PI*2);
-    ctx.strokeStyle=color+"80"; ctx.lineWidth=2*scale; ctx.stroke();
+  // ── BASE NEON RING ──
+  ctx.beginPath(); ctx.ellipse(x,y,16*scale,6*scale,0,0,Math.PI*2);
+  ctx.strokeStyle=ns.main; ctx.lineWidth=2.5*scale;
+  ctx.shadowColor=ns.main; ctx.shadowBlur=10*scale; ctx.stroke(); ctx.shadowBlur=0;
 
-    // ── BILLBOARD ──
-    var r=8*scale;
-    ctx.shadowColor=isFocused?color:"transparent";
-    ctx.shadowBlur=isFocused?30*scale:0;
+  // ── BILLBOARD OUTER FRAME (neon border tubes) ──
+  // Outer glow frame
+  ctx.shadowColor=ns.main; ctx.shadowBlur=isFocused?40*scale:20*scale;
+  roundRectStroke(ctx,bX-3*scale,bY-3*scale,bW+6*scale,bH+6*scale,10*scale,ns.main,3*scale);
+  ctx.shadowBlur=0;
 
-    // BG
-    roundRect(ctx,bX,bY,bW,bH,r,"rgba(6,6,12,0.94)");
-    roundRectStroke(ctx,bX,bY,bW,bH,r,isFocused?color:color+"50",isFocused?2*scale:1.5*scale);
-    ctx.shadowBlur=0;
+  // Inner glow frame
+  ctx.shadowColor=ns.accent; ctx.shadowBlur=10*scale;
+  roundRectStroke(ctx,bX-1*scale,bY-1*scale,bW+2*scale,bH+2*scale,9*scale,ns.accent+"80",1*scale);
+  ctx.shadowBlur=0;
 
-    // Top bar
-    ctx.save();
+  // ── BILLBOARD BACKGROUND ──
+  roundRect(ctx,bX,bY,bW,bH,8*scale,ns.bg);
+
+  // Scanline texture (CRT effect for TV-like look)
+  for(var sl=0;sl<bH;sl+=3*scale){
+    ctx.beginPath(); ctx.moveTo(bX,bY+sl); ctx.lineTo(bX+bW,bY+sl);
+    ctx.strokeStyle="rgba(0,0,0,0.12)"; ctx.lineWidth=1*scale; ctx.stroke();
+  }
+
+  // ── ANIMATED NEON TOP BAR ──
+  var barPulse=0.7+0.3*Math.sin(t*0.08+phase);
+  ctx.shadowColor=ns.main; ctx.shadowBlur=15*scale*barPulse;
+  roundRect(ctx,bX,bY,bW,6*scale,{tl:8*scale,tr:8*scale,bl:0,br:0},ns.main);
+  ctx.shadowBlur=0;
+
+  // ── SIDE NEON TUBES ──
+  var sidePulse=0.5+0.5*Math.sin(t*0.06+phase+1);
+  ctx.strokeStyle=ns.main; ctx.lineWidth=2*scale;
+  ctx.shadowColor=ns.main; ctx.shadowBlur=8*scale*sidePulse;
+  // Left tube
+  ctx.beginPath(); ctx.moveTo(bX+2*scale,bY+8*scale); ctx.lineTo(bX+2*scale,bY+bH-2*scale); ctx.stroke();
+  // Right tube
+  ctx.beginPath(); ctx.moveTo(bX+bW-2*scale,bY+8*scale); ctx.lineTo(bX+bW-2*scale,bY+bH-2*scale); ctx.stroke();
+  ctx.shadowBlur=0;
+
+  // ── CORNER SPARKLES ──
+  var corners=[[bX,bY],[bX+bW,bY],[bX,bY+bH],[bX+bW,bY+bH]];
+  var sparkPulse=0.4+0.6*Math.abs(Math.sin(t*0.12+phase));
+  corners.forEach(function(c){
+    ctx.beginPath(); ctx.arc(c[0],c[1],3*scale,0,Math.PI*2);
+    ctx.fillStyle=ns.accent; ctx.shadowColor=ns.accent; ctx.shadowBlur=8*scale*sparkPulse;
+    ctx.fill(); ctx.shadowBlur=0;
+  });
+
+  // ── BILLBOARD CONTENT ──
+  var cx=bX+bW/2, pad=10*scale;
+
+  // Distance + direction badge
+  var badgePulse=0.6+0.4*Math.sin(t*0.05+phase+2);
+  ctx.font=(8*scale)+"px monospace";
+  ctx.fillStyle=ns.main+"AA";
+  ctx.textAlign="center";
+  ctx.shadowColor=ns.main; ctx.shadowBlur=4*scale*badgePulse;
+  ctx.fillText(Math.round(dist)+"m - "+DIRNAMES[od.dir], cx, bY+pad+10*scale);
+  ctx.shadowBlur=0;
+
+  // Emoji (big, centered, glowing)
+  ctx.font=(24*scale)+"px serif";
+  ctx.shadowColor=ns.main; ctx.shadowBlur=12*scale;
+  ctx.fillText(od.emoji, cx, bY+pad+32*scale);
+  ctx.shadowBlur=0;
+
+  // Brand name (large, neon colored)
+  ctx.font="bold "+(15*scale)+"px sans-serif";
+  ctx.fillStyle=ns.main;
+  ctx.shadowColor=ns.main; ctx.shadowBlur=10*scale*(0.7+0.3*Math.sin(t*0.07+phase));
+  var brandTxt=od.name.length>16?od.name.substring(0,15)+"...":od.name;
+  ctx.fillText(brandTxt, cx, bY+pad+52*scale);
+  ctx.shadowBlur=0;
+
+  // Message (white, crisp)
+  ctx.font=(9*scale)+"px monospace";
+  ctx.fillStyle="rgba(255,255,255,0.8)";
+  var msgTxt=od.msg.length>28?od.msg.substring(0,27)+"...":od.msg;
+  ctx.fillText(msgTxt, cx, bY+pad+66*scale);
+
+  // Tag line (accent color, bottom)
+  ctx.font="bold "+(8*scale)+"px monospace";
+  ctx.fillStyle=ns.accent;
+  ctx.shadowColor=ns.accent; ctx.shadowBlur=6*scale;
+  var tagTxt=(od.tag||"AR OUTDOOR").toUpperCase();
+  ctx.fillText(tagTxt, cx, bY+pad+80*scale);
+  ctx.shadowBlur=0;
+
+  // ── RUNNING LIGHT STRIP (ticker effect) ──
+  var tickerY=bY+bH-2*scale;
+  var tickerOffset=(t*3)%bW;
+  for(var lx=0;lx<bW;lx+=8*scale){
+    var li=((lx+tickerOffset)/bW)%1;
+    var lb=0.2+0.8*Math.abs(Math.sin(li*Math.PI*6));
     ctx.beginPath();
-    ctx.moveTo(bX+r,bY); ctx.lineTo(bX+bW-r,bY);
-    ctx.quadraticCurveTo(bX+bW,bY,bX+bW,bY+r);
-    ctx.lineTo(bX+bW,bY+4*scale); ctx.lineTo(bX,bY+4*scale);
-    ctx.lineTo(bX,bY+r); ctx.quadraticCurveTo(bX,bY,bX+r,bY); ctx.closePath();
-    ctx.fillStyle=color; ctx.fill();
-    ctx.restore();
-
-    // ── BILLBOARD CONTENT ──
-    var cx2=bX+bW/2, pad=10*scale;
-    ctx.textAlign="center";
-
-    // Dist + direction
-    ctx.font=(8*scale)+"px monospace";
-    ctx.fillStyle="rgba(244,240,232,0.4)";
-    ctx.fillText(Math.round(dist)+"m - "+DIRNAMES[od.dir]+" | zoom "+(odZoom).toFixed(1)+"x", cx2, bY+pad+10*scale);
-
-    // Emoji
-    ctx.font=(20*scale)+"px serif";
-    ctx.fillStyle="#fff";
+    ctx.arc(bX+lx,tickerY,1.5*scale,0,Math.PI*2);
+    ctx.fillStyle=ns.main; ctx.globalAlpha=alpha*lb;
+    ctx.shadowColor=ns.main; ctx.shadowBlur=4*scale*lb;
+    ctx.fill(); ctx.shadowBlur=0;
     ctx.globalAlpha=alpha;
-    ctx.fillText(od.emoji, cx2, bY+pad+30*scale);
+  }
 
-    // Brand
-    ctx.font="bold "+(13*scale)+"px sans-serif";
-    ctx.fillStyle=color;
-    var brandTxt=od.name.length>18?od.name.substring(0,17)+"...":od.name;
-    ctx.fillText(brandTxt, cx2, bY+pad+50*scale);
-
-    // Message
+  // ── FOCUS EFFECT ──
+  if(isFocused){
+    var fp=0.6+0.4*Math.sin(t*0.15);
+    ctx.strokeStyle=ns.accent; ctx.lineWidth=2*scale;
+    ctx.shadowColor=ns.accent; ctx.shadowBlur=20*scale*fp;
+    roundRectStroke(ctx,bX-6*scale,bY-6*scale,bW+12*scale,bH+12*scale,12*scale,ns.accent,2*scale);
+    ctx.shadowBlur=0;
     ctx.font=(8*scale)+"px monospace";
-    ctx.fillStyle="rgba(244,240,232,0.55)";
-    var msgTxt=od.msg.length>26?od.msg.substring(0,25)+"...":od.msg;
-    ctx.fillText(msgTxt, cx2, bY+pad+64*scale);
+    ctx.fillStyle=ns.accent+"CC"; ctx.textAlign="center";
+    ctx.fillText("TAP CARD BELOW FOR OPTIONS", cx, bY-12*scale);
+  }
 
-    // Tag
-    ctx.font=(7*scale)+"px monospace";
-    ctx.fillStyle=color+"99";
-    var tagTxt=od.tag||"AR OUTDOOR";
-    ctx.fillText(tagTxt, cx2, bY+pad+78*scale);
+  ctx.restore();
+}
 
-    // Focus indicator - pulsing ring
-    if(isFocused){
-      var pulse=0.5+0.5*Math.sin(Date.now()*0.005);
-      ctx.beginPath(); ctx.ellipse(x,y,20*scale,7*scale,0,0,Math.PI*2);
-      ctx.strokeStyle=color; ctx.lineWidth=2*scale; ctx.globalAlpha=alpha*pulse; ctx.stroke();
-      ctx.globalAlpha=alpha;
-      // Tap hint
-      ctx.font=(8*scale)+"px monospace";
-      ctx.fillStyle=color+"CC";
-      ctx.fillText("TAP CARD FOR OPTIONS", cx2, bY-8*scale);
-    }
-
-    ctx.restore();
+function drawOutdoors(ctx, t) {
+  if(currentMode!=="outdoor") return;
+  odProjections={};
+  var sorted=outdoors.slice().sort(function(a,b){ return getOdDist(b)-getOdDist(a); });
+  sorted.forEach(function(od){
+    var bearing=(userLat!==null&&od.lat!==null)?bearingBetween(userLat,userLon,od.lat,od.lon):od.bearing;
+    var dist=getOdDist(od);
+    var proj=worldToScreen(bearing,dist,od.zoom||1.0);
+    if(!proj||dist>300) return;
+    drawTimesSquareBillboard(ctx,od,proj,dist,t);
   });
 }
 
+// ── CANVAS HELPERS ──
 function roundRect(ctx,x,y,w,h,r,fill){
-  ctx.beginPath();
-  ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y);
-  ctx.quadraticCurveTo(x+w,y,x+w,y+r);
-  ctx.lineTo(x+w,y+h-r); ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
-  ctx.lineTo(x+r,y+h); ctx.quadraticCurveTo(x,y+h,x,y+h-r);
-  ctx.lineTo(x,y+r); ctx.quadraticCurveTo(x,y,x+r,y); ctx.closePath();
+  if(typeof r==="object"){
+    var tl=r.tl||0,tr=r.tr||0,bl=r.bl||0,br2=r.br||0;
+    ctx.beginPath();
+    ctx.moveTo(x+tl,y); ctx.lineTo(x+w-tr,y); ctx.quadraticCurveTo(x+w,y,x+w,y+tr);
+    ctx.lineTo(x+w,y+h-br2); ctx.quadraticCurveTo(x+w,y+h,x+w-br2,y+h);
+    ctx.lineTo(x+bl,y+h); ctx.quadraticCurveTo(x,y+h,x,y+h-bl);
+    ctx.lineTo(x,y+tl); ctx.quadraticCurveTo(x,y,x+tl,y); ctx.closePath();
+  } else {
+    ctx.beginPath();
+    ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y); ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+    ctx.lineTo(x+w,y+h-r); ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+    ctx.lineTo(x+r,y+h); ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+    ctx.lineTo(x,y+r); ctx.quadraticCurveTo(x,y,x+r,y); ctx.closePath();
+  }
   if(fill){ ctx.fillStyle=fill; ctx.fill(); }
 }
 function roundRectStroke(ctx,x,y,w,h,r,stroke,lw){
-  roundRect(ctx,x,y,w,h,r,null);
-  ctx.strokeStyle=stroke; ctx.lineWidth=lw; ctx.stroke();
+  roundRect(ctx,x,y,w,h,r,null); ctx.strokeStyle=stroke; ctx.lineWidth=lw; ctx.stroke();
 }
 
 // ── GEO + COMPASS ──
@@ -839,7 +825,7 @@ function startGeo(){
     document.getElementById("gLat").textContent="LAT "+userLat.toFixed(5);
     document.getElementById("gLon").textContent="LON "+userLon.toFixed(5);
     outdoors.forEach(function(od){ if(od.lat===null){ var c=coordFromDir(userLat,userLon,od.bearing,od.dist); od.lat=c.lat; od.lon=c.lon; } });
-  },function(e){ console.warn("Geo:",e.message); },{enableHighAccuracy:true,maximumAge:3000,timeout:10000});
+  },function(e){},{ enableHighAccuracy:true,maximumAge:3000,timeout:10000});
 }
 
 function startCompass(){
@@ -861,7 +847,7 @@ function drawCompassNeedle(h){
   var a=(h-90)*Math.PI/180;
   ctx.save(); ctx.translate(25,25); ctx.rotate(a);
   ctx.beginPath(); ctx.moveTo(17,0); ctx.lineTo(-9,4); ctx.lineTo(-9,-4); ctx.closePath();
-  ctx.fillStyle="#C9A84C"; ctx.fill(); ctx.restore();
+  ctx.fillStyle="#C9A84C"; ctx.shadowColor="#C9A84C"; ctx.shadowBlur=8; ctx.fill(); ctx.restore();
   ctx.beginPath(); ctx.arc(25,25,3,0,Math.PI*2); ctx.fillStyle="#F4F0E8"; ctx.fill();
 }
 
@@ -882,7 +868,7 @@ async function loadModel(){
   }
 }
 
-// ── CAMERA + MAIN LOOP ──
+// ── CAMERA ──
 async function startCam(){
   document.getElementById("campanel").classList.add("hide");
   document.getElementById("loading").classList.remove("hide");
@@ -906,24 +892,27 @@ async function startDemo(){
   await loadModel();
   document.getElementById("loading").classList.add("hide");
   resizeCv(); startGeo(); startCompass(); setupPinch();
+  // 4 demo outdoors with different neon schemes
   var demo=[
-    {name:"Klipyt Origin",msg:"Join 87 legendary members - Origin tier available",emoji:"*",color:"#C9A84C",dir:"N",dist:60,tag:"AR SOCIAL"},
-    {name:"Nike AR Store", msg:"Exclusive drop this weekend only",                emoji:"~",color:"#FF6B35",dir:"S",dist:80,tag:"FASHION AR"},
-    {name:"Tesla EV",      msg:"Model S AR experience available now",             emoji:"!",color:"#E31937",dir:"E",dist:50,tag:"AUTO AR"},
-    {name:"Sky Lounge",    msg:"Members only rooftop - Floor 42",                 emoji:"@",color:"#4090E0",dir:"W",dist:100,tag:"VIP ONLY"}
+    {name:"KLIPYT ORIGIN", msg:"Join 87 legendary members now",    emoji:"*", color:"#C9A84C", dir:"N", dist:60,  tag:"AR SOCIAL NETWORK"},
+    {name:"NIKE AR STORE",  msg:"Exclusive Air Max drop - limited", emoji:"~", color:"#E31937", dir:"S", dist:80,  tag:"FASHION AR"},
+    {name:"TESLA EV ZONE",  msg:"Model S AR experience live now",   emoji:"!", color:"#4090E0", dir:"E", dist:50,  tag:"AUTO INNOVATION"},
+    {name:"SKY LOUNGE 42",  msg:"Members only rooftop access",      emoji:"@", color:"#9040D0", dir:"W", dist:100, tag:"VIP MEMBERS ONLY"}
   ];
-  demo.forEach(function(d){
-    outdoors.push({id:nextId++,name:d.name,msg:d.msg,emoji:d.emoji,color:d.color,dir:d.dir,dist:d.dist,bearing:DIR_BEARING[d.dir],lat:null,lon:null,tag:d.tag,zoom:1.0,clicks:0});
+  demo.forEach(function(d,i){
+    outdoors.push({id:nextId++,name:d.name,msg:d.msg,emoji:d.emoji,color:d.color,dir:d.dir,dist:d.dist,bearing:DIR_BEARING[d.dir],lat:null,lon:null,tag:d.tag,zoom:1.0,clicks:0,phase:i*Math.PI/2});
   });
   document.getElementById("odN").textContent=outdoors.length;
-  setStatus("Demo - Pinch zoom + tap outdoor"); demoFaceLoop(); mainLoopDemo();
+  setStatus("Demo - Pinch zoom + tap to open"); demoLoop(); mainLoopOutdoor();
   var dh=0;
-  setInterval(function(){ dh=(dh+0.3)%360; userHeading=dh; drawCompassNeedle(dh); document.getElementById("cdeg").textContent=Math.round(dh); },50);
+  setInterval(function(){ dh=(dh+0.25)%360; userHeading=dh; drawCompassNeedle(dh); document.getElementById("cdeg").textContent=Math.round(dh); },50);
 }
 
+// ── MAIN LOOPS ──
 async function mainLoop(){
   var video=document.getElementById("video"),canvas=document.getElementById("canvas");
   async function frame(){
+    frameCount++;
     var ctx=canvas.getContext("2d"); ctx.clearRect(0,0,W,H); drawGrid(ctx);
     if(currentMode==="face"){
       var dets=[];
@@ -938,48 +927,50 @@ async function mainLoop(){
           var card=document.getElementById("fc"+i);
           if(card){ card.style.left=(b.x*sx+b.width*sx/2)+"px"; card.style.top=Math.max(50,b.y*sy-80)+"px"; card.classList.add("on"); }
         });
-        for(var i=dets.length;i<3;i++){ var c2=document.getElementById("fc"+i); if(c2)c2.classList.remove("on"); }
+        for(var i=dets.length;i<3;i++){ var c2=document.getElementById("fc"+i); if(c2) c2.classList.remove("on"); }
         var n=dets.length;
         document.getElementById("infoTxt").textContent=n+" FACE"+(n!==1?"S":"")+(n===0?" - Point at face":"");
         if(n>0) setStatus(n+" Klip"+(n>1?"s":"")+" detected");
         else setStatus("Face AR - Point at a face");
       }
     } else {
-      for(var i=0;i<3;i++){ var c3=document.getElementById("fc"+i); if(c3)c3.classList.remove("on"); }
-      drawOutdoors(ctx);
-      var vis=outdoors.filter(function(od){ return getOdProj(od)!==null; });
-      document.getElementById("infoTxt").textContent=vis.length+" OUTDOOR"+(vis.length!==1?"S":"");
+      for(var i=0;i<3;i++){ var c3=document.getElementById("fc"+i); if(c3) c3.classList.remove("on"); }
+      drawOutdoors(ctx,frameCount);
+      var vis=outdoors.filter(function(od){ return odProjections[od.id]; });
+      document.getElementById("infoTxt").textContent=vis.length+" OUTDOOR"+(vis.length!==1?"S":"")+" VISIBLE";
     }
     requestAnimationFrame(frame);
   }
   frame();
 }
 
-function demoFaceLoop(){
-  var canvas=document.getElementById("canvas"),shown=0,tick2=0;
+function demoLoop(){
+  var canvas=document.getElementById("canvas"),shown=0,t2=0;
   var df=[{x:.1,y:.18,w:.28,h:.35,mi:0},{x:.55,y:.14,w:.24,h:.30,mi:1}];
   function reveal(){ if(shown>=df.length)return; shown++; showToast(MEMBERS[shown-1].num+" detected","Face"); encounters++; document.getElementById("encN").textContent=encounters; setTimeout(reveal,2200); }
   setTimeout(reveal,1200);
   function draw(){
     if(currentMode!=="face"){ requestAnimationFrame(draw); return; }
-    var ctx=document.getElementById("canvas").getContext("2d"); ctx.clearRect(0,0,W,H); drawGrid(ctx); tick2++;
-    df.slice(0,shown).forEach(function(f,i){ var x=f.x*W,y=f.y*H,w=f.w*W,h=f.h*H,m=MEMBERS[f.mi]; drawFaceBox(ctx,x,y,w,h,m.color,0.55+Math.sin(tick2*0.06+i)*0.45); var card=document.getElementById("fc"+i); if(card){ card.style.left=(x+w/2)+"px"; card.style.top=Math.max(50,y-80)+"px"; card.classList.add("on"); } });
-    for(var i=shown;i<3;i++){ var c=document.getElementById("fc"+i); if(c)c.classList.remove("on"); }
+    var ctx=document.getElementById("canvas").getContext("2d"); ctx.clearRect(0,0,W,H); drawGrid(ctx); t2++;
+    df.slice(0,shown).forEach(function(f,i){ var x=f.x*W,y=f.y*H,w=f.w*W,h=f.h*H,m=MEMBERS[f.mi]; drawFaceBox(ctx,x,y,w,h,m.color,0.55+Math.sin(t2*0.06+i)*0.45); var card=document.getElementById("fc"+i); if(card){ card.style.left=(x+w/2)+"px"; card.style.top=Math.max(50,y-80)+"px"; card.classList.add("on"); } });
+    for(var i=shown;i<3;i++){ var c=document.getElementById("fc"+i); if(c) c.classList.remove("on"); }
     document.getElementById("infoTxt").textContent=shown+" FACE"+(shown!==1?"S":"");
     requestAnimationFrame(draw);
   }
   draw();
 }
 
-function mainLoopDemo(){
+function mainLoopOutdoor(){
   var canvas=document.getElementById("canvas");
   function frame(){
-    if(currentMode==="outdoor"){ var ctx=canvas.getContext("2d"); ctx.clearRect(0,0,W,H); drawGrid(ctx); drawOutdoors(ctx); var vis=outdoors.filter(function(od){ return getOdProj(od)!==null; }); document.getElementById("infoTxt").textContent=vis.length+" OUTDOOR"+(vis.length!==1?"S":"")+" IN VIEW"; }
+    frameCount++;
+    if(currentMode==="outdoor"){ var ctx=canvas.getContext("2d"); ctx.clearRect(0,0,W,H); drawGrid(ctx); drawOutdoors(ctx,frameCount); var vis=outdoors.filter(function(od){ return odProjections[od.id]; }); document.getElementById("infoTxt").textContent=vis.length+" OUTDOOR"+(vis.length!==1?"S":"")+" VISIBLE"; }
     requestAnimationFrame(frame);
   }
   frame();
 }
 
+// ── DRAW HELPERS ──
 function drawGrid(ctx){
   ctx.strokeStyle="rgba(201,168,76,0.04)"; ctx.lineWidth=1;
   for(var x=0;x<W;x+=56){ ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
