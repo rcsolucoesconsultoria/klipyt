@@ -3,395 +3,593 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Klipyt MVP</title>
+<title>Klipyt — Face AR</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
   :root {
-    --gold: #C9A84C; --gold-light: #F0D080; --gold-dim: rgba(201,168,76,0.3);
-    --black: #060608; --black2: #0D0D12; --white: #F4F0E8; --white-dim: rgba(244,240,232,0.5);
+    --gold:#C9A84C;--gold-l:#F0D080;--gold-d:rgba(201,168,76,0.3);
+    --black:#060608;--white:#F4F0E8;--wdim:rgba(244,240,232,0.5);
   }
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-  html, body { width: 100%; height: 100%; overflow: hidden; background: var(--black); color: var(--white); font-family: 'Syne', sans-serif; }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html,body{width:100%;height:100%;overflow:hidden;background:var(--black);color:var(--white);font-family:'Syne',sans-serif}
 
-  .screen { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.4s, transform 0.4s; }
-  .screen.hidden { opacity: 0; pointer-events: none; transform: scale(0.97); }
+  /* SCREENS */
+  .scr{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .4s,transform .4s}
+  .scr.off{opacity:0;pointer-events:none;transform:scale(.97)}
 
   /* SPLASH */
-  #splash { gap: 0; background: radial-gradient(ellipse 70% 60% at 25% 35%, rgba(201,168,76,0.07) 0%, transparent 60%), var(--black); }
-  .logo { font-size: 56px; font-weight: 800; letter-spacing: -2px; }
-  .logo span { color: var(--gold); }
-  .tagline { font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 3px; color: var(--white-dim); text-transform: uppercase; margin-top: 10px; }
-  .btn-gold { margin-top: 52px; background: var(--gold); color: var(--black); border: none; padding: 18px 52px; font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; letter-spacing: 1px; border-radius: 2px; cursor: pointer; transition: background 0.2s, transform 0.1s; }
-  .btn-gold:active { transform: scale(0.97); background: var(--gold-light); }
-  .splash-note { margin-top: 18px; font-family: 'DM Mono', monospace; font-size: 11px; color: var(--white-dim); }
-  .splash-note span { color: var(--gold); }
+  #splash{gap:0;background:radial-gradient(ellipse 70% 60% at 25% 35%,rgba(201,168,76,.07) 0%,transparent 60%),var(--black)}
+  .logo{font-size:54px;font-weight:800;letter-spacing:-2px}
+  .logo span{color:var(--gold)}
+  .tag{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:3px;color:var(--wdim);text-transform:uppercase;margin-top:10px}
+  .gbtn{margin-top:52px;background:var(--gold);color:var(--black);border:none;padding:18px 52px;font-family:'Syne',sans-serif;font-size:15px;font-weight:700;letter-spacing:1px;border-radius:2px;cursor:pointer;transition:background .2s,transform .1s}
+  .gbtn:active{transform:scale(.97);background:var(--gold-l)}
+  .snote{margin-top:16px;font-family:'DM Mono',monospace;font-size:11px;color:var(--wdim)}
+  .snote span{color:var(--gold)}
 
   /* SETUP */
-  #setup { gap: 16px; padding: 40px 24px; overflow-y: auto; background: var(--black); }
-  .setup-step { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 3px; color: var(--gold); text-transform: uppercase; }
-  .setup-title { font-size: 26px; font-weight: 800; letter-spacing: -1px; text-align: center; }
-  .setup-title span { color: var(--gold); }
-  .setup-sub { font-size: 12px; color: var(--white-dim); font-family: 'DM Mono', monospace; text-align: center; line-height: 1.6; }
-  .aura-row { display: flex; gap: 14px; justify-content: center; }
-  .aura-opt { width: 64px; height: 64px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; transition: border-color 0.2s, transform 0.15s; position: relative; }
-  .aura-opt.sel { border-color: var(--gold); transform: scale(1.12); }
-  .aura-opt.sel::after { content:'✓'; position:absolute; bottom:-2px; right:-2px; width:18px; height:18px; background:var(--gold); border-radius:50%; font-size:9px; color:var(--black); display:flex; align-items:center; justify-content:center; font-weight:700; }
-  .a-gold  { background: radial-gradient(circle, #F0D080, #8B6914); }
-  .a-blue  { background: radial-gradient(circle, #80C0FF, #1040A0); }
-  .a-purple{ background: radial-gradient(circle, #D080FF, #600090); }
-  .a-green { background: radial-gradient(circle, #80FFB0, #006030); }
-  .a-red   { background: radial-gradient(circle, #FF8080, #900010); }
-  .setup-input { width: 100%; max-width: 280px; background: rgba(244,240,232,0.06); border: 1px solid rgba(201,168,76,0.25); border-radius: 3px; padding: 14px 16px; font-family: 'DM Mono', monospace; font-size: 14px; color: var(--white); outline: none; text-align: center; letter-spacing: 1px; }
-  .setup-input::placeholder { color: var(--white-dim); }
-  .setup-input:focus { border-color: var(--gold); }
+  #setup{gap:16px;padding:40px 24px;overflow-y:auto;background:var(--black)}
+  .slbl{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:3px;color:var(--gold);text-transform:uppercase}
+  .stitle{font-size:26px;font-weight:800;letter-spacing:-1px;text-align:center}
+  .stitle span{color:var(--gold)}
+  .ssub{font-size:12px;color:var(--wdim);font-family:'DM Mono',monospace;text-align:center;line-height:1.6}
+  .arow{display:flex;gap:14px;justify-content:center}
+  .aopt{width:64px;height:64px;border-radius:50%;border:2px solid transparent;cursor:pointer;transition:border-color .2s,transform .15s;position:relative}
+  .aopt.sel{border-color:var(--gold);transform:scale(1.12)}
+  .aopt.sel::after{content:'✓';position:absolute;bottom:-2px;right:-2px;width:18px;height:18px;background:var(--gold);border-radius:50%;font-size:9px;color:var(--black);display:flex;align-items:center;justify-content:center;font-weight:700}
+  .ag{background:radial-gradient(circle,#F0D080,#8B6914)}
+  .ab{background:radial-gradient(circle,#80C0FF,#1040A0)}
+  .ap{background:radial-gradient(circle,#D080FF,#600090)}
+  .an{background:radial-gradient(circle,#80FFB0,#006030)}
+  .ar2{background:radial-gradient(circle,#FF8080,#900010)}
+  .sinput{width:100%;max-width:280px;background:rgba(244,240,232,.06);border:1px solid rgba(201,168,76,.25);border-radius:3px;padding:14px 16px;font-family:'DM Mono',monospace;font-size:14px;color:var(--white);outline:none;text-align:center;letter-spacing:1px}
+  .sinput::placeholder{color:var(--wdim)}
+  .sinput:focus{border-color:var(--gold)}
 
   /* AR */
-  #ar { background: #000; }
-  #video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: none; }
-  #arCanvas { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+  #ar{background:#000}
+  #video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none;transform:scaleX(-1)}
+  #overlay{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
 
-  .hud-top { position: absolute; top: 0; left: 0; right: 0; padding: 20px 20px 16px; display: flex; justify-content: space-between; align-items: flex-start; background: linear-gradient(to bottom, rgba(6,6,8,0.85), transparent); z-index: 10; }
-  .hud-logo { font-size: 20px; font-weight: 800; letter-spacing: -0.5px; }
-  .hud-logo span { color: var(--gold); }
-  .hud-right { text-align: right; font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 2px; color: var(--gold); }
-  .hud-right .big { font-size: 20px; font-weight: 800; display: block; letter-spacing: -1px; }
+  /* HUD top */
+  .htop{position:absolute;top:0;left:0;right:0;padding:20px 20px 16px;display:flex;justify-content:space-between;align-items:flex-start;background:linear-gradient(to bottom,rgba(6,6,8,.85),transparent);z-index:20}
+  .hlogo{font-size:20px;font-weight:800;letter-spacing:-.5px}
+  .hlogo span{color:var(--gold)}
+  .hright{text-align:right;font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--gold)}
+  .hright .big{font-size:20px;font-weight:800;display:block;letter-spacing:-1px}
 
-  .reticle { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 180px; height: 180px; z-index: 10; pointer-events: none; }
-  .rc { position: absolute; width: 22px; height: 22px; border-color: var(--gold); border-style: solid; opacity: 0.7; }
-  .rc-tl { top:0;left:0;border-width:2px 0 0 2px; } .rc-tr { top:0;right:0;border-width:2px 2px 0 0; }
-  .rc-bl { bottom:0;left:0;border-width:0 0 2px 2px; } .rc-br { bottom:0;right:0;border-width:0 2px 2px 0; }
-  .scan-line { position:absolute; left:2px; right:2px; height:1px; background:linear-gradient(to right, transparent, var(--gold), transparent); animation: scanMove 2.5s ease-in-out infinite; }
-  @keyframes scanMove { 0%,100%{top:6px;opacity:0.3} 50%{top:calc(100% - 6px);opacity:1} }
-  .scan-txt { position:absolute; bottom:-24px; left:50%; transform:translateX(-50%); font-family:'DM Mono',monospace; font-size:9px; letter-spacing:2px; color:var(--gold); white-space:nowrap; opacity:0.7; }
+  /* Status bar */
+  .hbot{position:absolute;bottom:0;left:0;right:0;padding:16px 20px 30px;background:linear-gradient(to top,rgba(6,6,8,.9),transparent);z-index:20;display:flex;justify-content:space-between;align-items:flex-end}
+  .stat{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--wdim);text-transform:uppercase}
+  .dot{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:5px;animation:blink 2s infinite}
+  .dot.green{background:#4CAF50}
+  .dot.yellow{background:#FFC107}
+  .dot.red{background:#F44336}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+  .hbtns{display:flex;gap:10px;align-items:center}
+  .hbtn{width:46px;height:46px;border-radius:50%;border:1px solid var(--gold-d);background:rgba(6,6,8,.85);color:var(--gold);font-size:16px;display:flex;align-items:center;justify-content:center;cursor:pointer;backdrop-filter:blur(8px);transition:background .2s,transform .1s}
+  .hbtn:active{transform:scale(.92);background:rgba(201,168,76,.2)}
+  .hbtxt{background:rgba(6,6,8,.85);border:1px solid var(--gold-d);color:var(--gold);padding:10px 14px;font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;border-radius:2px;cursor:pointer;backdrop-filter:blur(8px)}
 
-  /* Klip overlay */
-  .klip { position: absolute; z-index: 20; display: flex; flex-direction: column; align-items: center; gap: 4px; opacity: 0; transition: opacity 0.6s ease; pointer-events: none; }
-  .klip.on { opacity: 1; }
-  .klip-ball { width: 76px; height: 76px; border-radius: 50%; position: relative; display: flex; align-items: center; justify-content: center; }
-  .klip-ring { position:absolute; inset:-8px; border-radius:50%; border:1.5px solid; animation: kspin 5s linear infinite; }
-  .klip-ring2 { inset:-16px; animation-duration:9s; animation-direction:reverse; opacity:0.4; }
-  @keyframes kspin { from{transform:rotate(0)} to{transform:rotate(360deg)} }
-  .klip-n { font-size:18px; font-weight:800; color:#fff; z-index:1; text-shadow:0 0 16px rgba(0,0,0,0.9); letter-spacing:-1px; }
-  .klip-connector { width:1px; height:16px; background:linear-gradient(to bottom, var(--gold-dim), transparent); }
-  .klip-card { background:rgba(6,6,8,0.88); border:1px solid var(--gold-dim); border-radius:3px; padding:6px 14px; text-align:center; backdrop-filter:blur(8px); min-width:120px; }
-  .klip-card-name { font-size:12px; font-weight:700; }
-  .klip-card-tier { font-family:'DM Mono',monospace; font-size:8px; letter-spacing:2px; color:var(--gold); text-transform:uppercase; margin-top:2px; }
+  /* Face count badge */
+  .fbadge{position:absolute;top:80px;right:20px;z-index:20;background:rgba(6,6,8,.85);border:1px solid var(--gold-d);border-radius:3px;padding:8px 14px;font-family:'DM Mono',monospace;font-size:10px;color:var(--gold);letter-spacing:2px;text-transform:uppercase;backdrop-filter:blur(8px)}
 
-  /* Camera permission panel */
-  #camPanel { position:absolute; inset:0; z-index:40; background:rgba(6,6,8,0.97); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; padding:40px; text-align:center; }
-  #camPanel.hidden { display:none; }
-  .cam-icon { font-size:44px; }
-  .cam-title { font-size:22px; font-weight:800; letter-spacing:-0.5px; }
-  .cam-desc { font-size:12px; color:var(--white-dim); font-family:'DM Mono',monospace; line-height:1.8; }
-  .cam-step { background:rgba(201,168,76,0.07); border:1px solid var(--gold-dim); border-radius:3px; padding:12px 16px; width:100%; max-width:280px; font-family:'DM Mono',monospace; font-size:11px; color:var(--white-dim); line-height:1.7; text-align:left; }
-  .cam-step strong { color:var(--gold); display:block; margin-bottom:4px; letter-spacing:1px; font-size:10px; }
-  .btn-outline { background:transparent; border:1px solid var(--gold-dim); color:var(--gold); padding:14px 32px; font-family:'Syne',monospace; font-size:13px; font-weight:700; border-radius:2px; cursor:pointer; letter-spacing:1px; transition:background 0.2s; }
-  .btn-outline:active { background:rgba(201,168,76,0.15); }
+  /* Loading overlay */
+  #loading{position:absolute;inset:0;z-index:50;background:rgba(6,6,8,.97);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px}
+  #loading.hide{display:none}
+  .lring{width:60px;height:60px;border:2px solid rgba(201,168,76,.2);border-top-color:var(--gold);border-radius:50%;animation:spin 1s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .ltxt{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:2px;color:var(--wdim);text-transform:uppercase;text-align:center}
+  .lprog{width:200px;height:2px;background:rgba(201,168,76,.15);border-radius:2px;overflow:hidden;margin-top:4px}
+  .lprog-bar{height:100%;background:var(--gold);width:0%;transition:width .3s ease;border-radius:2px}
 
-  /* Toast */
-  .toast { position:absolute; top:80px; left:50%; transform:translateX(-50%) translateY(-12px); background:rgba(6,6,8,0.92); border:1px solid var(--gold-dim); border-radius:3px; padding:10px 18px; z-index:30; text-align:center; opacity:0; transition:opacity 0.3s, transform 0.3s; backdrop-filter:blur(10px); white-space:nowrap; pointer-events:none; }
-  .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
-  .toast-label { font-family:'DM Mono',monospace; font-size:8px; letter-spacing:2px; color:var(--gold); text-transform:uppercase; }
-  .toast-name { font-size:13px; font-weight:700; margin-top:2px; }
+  /* Camera panel */
+  #campanel{position:absolute;inset:0;z-index:40;background:rgba(6,6,8,.97);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:40px;text-align:center}
+  #campanel.hide{display:none}
+  .cicon{font-size:44px}
+  .ctitle{font-size:22px;font-weight:800;letter-spacing:-.5px}
+  .cdesc{font-size:12px;color:var(--wdim);font-family:'DM Mono',monospace;line-height:1.8}
+  .cstep{background:rgba(201,168,76,.07);border:1px solid var(--gold-d);border-radius:3px;padding:12px 16px;width:100%;max-width:280px;font-family:'DM Mono',monospace;font-size:11px;color:var(--wdim);line-height:1.7;text-align:left}
+  .cstep strong{color:var(--gold);display:block;margin-bottom:4px;letter-spacing:1px;font-size:10px}
+  .obtn{background:transparent;border:1px solid var(--gold-d);color:var(--gold);padding:14px 32px;font-family:'Syne',sans-serif;font-size:13px;font-weight:700;border-radius:2px;cursor:pointer}
 
-  /* Bottom HUD */
-  .hud-bot { position:absolute; bottom:0; left:0; right:0; padding:16px 20px 28px; background:linear-gradient(to top, rgba(6,6,8,0.9), transparent); z-index:10; display:flex; justify-content:space-between; align-items:flex-end; }
-  .status { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:2px; color:var(--white-dim); text-transform:uppercase; }
-  .dot { display:inline-block; width:6px; height:6px; background:#4CAF50; border-radius:50%; margin-right:5px; animation:blink 2s infinite; }
-  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.25} }
-  .hud-btns { display:flex; gap:10px; align-items:center; }
-  .hud-btn { width:46px; height:46px; border-radius:50%; border:1px solid var(--gold-dim); background:rgba(6,6,8,0.85); color:var(--gold); font-size:16px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:background 0.2s, transform 0.1s; backdrop-filter:blur(8px); }
-  .hud-btn:active { transform:scale(0.92); background:rgba(201,168,76,0.2); }
-  .hud-btn-text { background:rgba(6,6,8,0.85); border:1px solid var(--gold-dim); color:var(--gold); padding:10px 14px; font-family:'DM Mono',monospace; font-size:9px; letter-spacing:2px; text-transform:uppercase; border-radius:2px; cursor:pointer; backdrop-filter:blur(8px); transition:background 0.2s; }
-  .hud-btn-text:active { background:rgba(201,168,76,0.15); }
-
-  /* Demo mode bg */
-  #demoBg { position:absolute; inset:0; background:radial-gradient(ellipse 60% 50% at 30% 40%, rgba(201,168,76,0.05),transparent 60%), radial-gradient(ellipse 50% 60% at 70% 60%, rgba(80,40,180,0.04),transparent 60%), #080810; display:none; }
-  #demoBg .demo-txt { position:absolute; bottom:120px; left:50%; transform:translateX(-50%); font-family:'DM Mono',monospace; font-size:9px; letter-spacing:2px; color:rgba(244,240,232,0.12); text-transform:uppercase; text-align:center; line-height:2.2; white-space:nowrap; }
+  /* Klip card drawn on canvas — but also DOM cards for accessibility */
+  .klip-card{position:absolute;pointer-events:none;z-index:15;opacity:0;transition:opacity .4s;transform:translateX(-50%)}
+  .klip-card.show{opacity:1}
+  .klip-inner{background:rgba(6,6,8,.88);border:1px solid var(--gold-d);border-radius:4px;padding:8px 16px;text-align:center;backdrop-filter:blur(10px);min-width:130px}
+  .klip-name{font-size:13px;font-weight:700}
+  .klip-tier{font-family:'DM Mono',monospace;font-size:8px;letter-spacing:2px;color:var(--gold);text-transform:uppercase;margin-top:2px}
+  .klip-num-big{font-size:11px;font-weight:800;color:var(--gold);letter-spacing:1px;margin-bottom:2px}
 
   /* Modal */
-  #myModal { position:absolute; inset:0; z-index:50; background:rgba(6,6,8,0.96); backdrop-filter:blur(20px); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:18px; opacity:0; pointer-events:none; transition:opacity 0.3s; padding:40px 24px; }
-  #myModal.open { opacity:1; pointer-events:all; }
-  .m-close { position:absolute; top:20px; right:20px; width:38px; height:38px; border:1px solid var(--gold-dim); border-radius:50%; color:var(--white-dim); font-size:16px; display:flex; align-items:center; justify-content:center; cursor:pointer; background:none; }
-  .m-aura { width:130px; height:130px; border-radius:50%; position:relative; display:flex; align-items:center; justify-content:center; }
-  .m-ring { position:absolute; border-radius:50%; border:1px solid; animation:kspin 6s linear infinite; }
-  .m-ring1 { inset:-12px; } .m-ring2 { inset:-24px; animation-duration:11s; animation-direction:reverse; opacity:0.4; } .m-ring3 { inset:-38px; animation-duration:16s; opacity:0.2; }
-  .m-num { font-size:32px; font-weight:800; color:#fff; z-index:1; letter-spacing:-2px; }
-  .m-name { font-size:26px; font-weight:800; letter-spacing:-1px; }
-  .m-tier { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:3px; color:var(--gold); text-transform:uppercase; border:1px solid var(--gold-dim); padding:5px 16px; border-radius:2px; }
-  .m-stats { display:flex; gap:1px; background:rgba(244,240,232,0.05); width:100%; max-width:300px; border-radius:3px; overflow:hidden; }
-  .m-stat { flex:1; background:var(--black); padding:14px 6px; text-align:center; }
-  .m-stat-n { font-size:20px; font-weight:800; color:var(--gold); letter-spacing:-1px; }
-  .m-stat-l { font-family:'DM Mono',monospace; font-size:8px; letter-spacing:1px; color:var(--white-dim); text-transform:uppercase; margin-top:3px; }
+  #modal{position:absolute;inset:0;z-index:60;background:rgba(6,6,8,.96);backdrop-filter:blur(20px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;opacity:0;pointer-events:none;transition:opacity .3s;padding:40px 24px}
+  #modal.open{opacity:1;pointer-events:all}
+  .mclose{position:absolute;top:20px;right:20px;width:38px;height:38px;border:1px solid var(--gold-d);border-radius:50%;color:var(--wdim);font-size:16px;display:flex;align-items:center;justify-content:center;cursor:pointer;background:none}
+  .maura{width:130px;height:130px;border-radius:50%;position:relative;display:flex;align-items:center;justify-content:center}
+  .mring{position:absolute;border-radius:50%;border:1px solid;animation:kspin 6s linear infinite}
+  .mring1{inset:-12px}.mring2{inset:-24px;animation-duration:11s;animation-direction:reverse;opacity:.4}.mring3{inset:-38px;animation-duration:16s;opacity:.2}
+  @keyframes kspin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+  .mnum{font-size:32px;font-weight:800;color:#fff;z-index:1;letter-spacing:-2px}
+  .mname{font-size:26px;font-weight:800;letter-spacing:-1px}
+  .mtier{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:3px;color:var(--gold);text-transform:uppercase;border:1px solid var(--gold-d);padding:5px 16px;border-radius:2px}
+  .mstats{display:flex;gap:1px;background:rgba(244,240,232,.05);width:100%;max-width:300px;border-radius:3px;overflow:hidden}
+  .mstat{flex:1;background:var(--black);padding:14px 6px;text-align:center}
+  .msn{font-size:20px;font-weight:800;color:var(--gold);letter-spacing:-1px}
+  .msl{font-family:'DM Mono',monospace;font-size:8px;letter-spacing:1px;color:var(--wdim);text-transform:uppercase;margin-top:3px}
+
+  /* Toast */
+  .toast{position:absolute;top:80px;left:50%;transform:translateX(-50%) translateY(-12px);background:rgba(6,6,8,.92);border:1px solid var(--gold-d);border-radius:3px;padding:10px 18px;z-index:30;text-align:center;opacity:0;transition:opacity .3s,transform .3s;backdrop-filter:blur(10px);white-space:nowrap;pointer-events:none}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .tlbl{font-family:'DM Mono',monospace;font-size:8px;letter-spacing:2px;color:var(--gold);text-transform:uppercase}
+  .tname{font-size:13px;font-weight:700;margin-top:2px}
 </style>
 </head>
 <body>
 
 <!-- SPLASH -->
-<div class="screen" id="splash">
+<div class="scr" id="splash">
   <div class="logo">Kli<span>py</span>t</div>
-  <div class="tagline">AR Social Network</div>
-  <button class="btn-gold" onclick="show('setup')">Create My Klip</button>
-  <div class="splash-note" style="margin-top:16px">Member <span>#14</span> · Origin tier awaits</div>
+  <div class="tag">AR · Face Recognition</div>
+  <button class="gbtn" onclick="show('setup')">Create My Klip</button>
+  <div class="snote" style="margin-top:16px">Member <span>#14</span> · Origin tier</div>
 </div>
 
 <!-- SETUP -->
-<div class="screen hidden" id="setup">
-  <div class="setup-step">Choose your aura</div>
-  <div class="setup-title">What others <span>see</span></div>
-  <div class="setup-sub">Visible in AR when someone scans you</div>
-  <div class="aura-row">
-    <div class="aura-opt a-gold sel" onclick="pickAura(this,'#C9A84C')"></div>
-    <div class="aura-opt a-blue"   onclick="pickAura(this,'#4090E0')"></div>
-    <div class="aura-opt a-purple" onclick="pickAura(this,'#9040D0')"></div>
-    <div class="aura-opt a-green"  onclick="pickAura(this,'#30C060')"></div>
-    <div class="aura-opt a-red"    onclick="pickAura(this,'#D04040')"></div>
+<div class="scr off" id="setup">
+  <div class="slbl">Choose your aura</div>
+  <div class="stitle">What others <span>see</span></div>
+  <div class="ssub">Visible in AR when someone scans your face</div>
+  <div class="arow">
+    <div class="aopt ag sel" onclick="pickAura(this,'#C9A84C')"></div>
+    <div class="aopt ab"    onclick="pickAura(this,'#4090E0')"></div>
+    <div class="aopt ap"    onclick="pickAura(this,'#9040D0')"></div>
+    <div class="aopt an"    onclick="pickAura(this,'#30C060')"></div>
+    <div class="aopt ar2"   onclick="pickAura(this,'#D04040')"></div>
   </div>
-  <div class="setup-step" style="margin-top:4px">Your name</div>
-  <input class="setup-input" id="nameIn" type="text" placeholder="Enter your name" maxlength="20" autocomplete="off"/>
-  <button class="btn-gold" onclick="launch()">Launch AR →</button>
-  <div class="splash-note" style="margin-top:8px;font-size:11px">You'll be member <span>#14</span> · Origin</div>
+  <div class="slbl" style="margin-top:4px">Your name</div>
+  <input class="sinput" id="nameIn" type="text" placeholder="Enter your name" maxlength="20" autocomplete="off"/>
+  <button class="gbtn" onclick="goAR()">Launch Face AR →</button>
+  <div class="snote" style="margin-top:8px;font-size:11px">Member <span>#14</span> · Origin Legendary</div>
 </div>
 
 <!-- AR -->
-<div class="screen hidden" id="ar">
-  <div id="demoBg"><div class="demo-txt">DEMO MODE · CAMERA NOT ACTIVE<br>KLIPS ARE SIMULATED</div></div>
+<div class="scr off" id="ar">
   <video id="video" autoplay playsinline muted></video>
-  <canvas id="arCanvas"></canvas>
+  <canvas id="overlay"></canvas>
+
+  <!-- DOM Klip cards (positioned by JS) -->
+  <div class="klip-card" id="kcard0"><div class="klip-inner"><div class="klip-num-big">#14</div><div class="klip-name" id="kname0">You</div><div class="klip-tier" id="ktier0">⬡ Origin · Legendary</div></div></div>
+  <div class="klip-card" id="kcard1"><div class="klip-inner"><div class="klip-num-big">#47</div><div class="klip-name">Mia S.</div><div class="klip-tier">⬡ Origin · Legendary</div></div></div>
+  <div class="klip-card" id="kcard2"><div class="klip-inner"><div class="klip-num-big">#312</div><div class="klip-name">Omar K.</div><div class="klip-tier">◎ Rare</div></div></div>
+  <div class="klip-card" id="kcard3"><div class="klip-inner"><div class="klip-num-big">#1,204</div><div class="klip-name">Sofia L.</div><div class="klip-tier">◈ Select</div></div></div>
+
+  <div class="htop">
+    <div class="hlogo">Kli<span>py</span>t</div>
+    <div class="hright"><span class="big">#14</span>Origin</div>
+  </div>
+
+  <div class="fbadge" id="fbadge">0 FACES</div>
+
+  <div class="toast" id="toast"><div class="tlbl">Klip detected</div><div class="tname" id="ttxt">—</div></div>
+
+  <div class="hbot">
+    <div class="stat" id="statTxt"><span class="dot yellow" id="statDot"></span>Loading model...</div>
+    <div class="hbtns">
+      <button class="hbtxt" onclick="openModal()">My Klip</button>
+      <button class="hbtn" onclick="show('setup')" title="Settings">◈</button>
+    </div>
+  </div>
 
   <!-- Camera permission panel -->
-  <div id="camPanel">
-    <div class="cam-icon">📷</div>
-    <div class="cam-title">Enable Camera</div>
-    <div class="cam-desc">Klipyt needs your camera to show<br>AR Klips in the real world.</div>
-    <div class="cam-step">
-      <strong>HOW TO ALLOW ON ANDROID</strong>
-      1. Tap "Allow Camera" below<br>
-      2. When browser asks → tap Allow<br>
-      3. If blocked: browser menu → Site Settings → Camera → Allow
+  <div id="campanel">
+    <div class="cicon">📷</div>
+    <div class="ctitle">Enable Camera</div>
+    <div class="cdesc">Klipyt needs your camera to<br>detect faces and show AR Klips.</div>
+    <div class="cstep">
+      <strong>ANDROID</strong>
+      Tap Allow Camera → when browser asks → Allow<br>
+      If blocked: browser menu → Site Settings → Camera
     </div>
-    <div class="cam-step">
-      <strong>HOW TO ALLOW ON IOS</strong>
-      1. Tap "Allow Camera" below<br>
-      2. Safari will ask → tap Allow<br>
-      3. If blocked: Settings → Safari → Camera → Allow
+    <div class="cstep">
+      <strong>IOS / SAFARI</strong>
+      Tap Allow Camera → Allow<br>
+      If blocked: Settings → Safari → Camera → Allow
     </div>
-    <button class="btn-gold" onclick="startCam()">Allow Camera</button>
-    <button class="btn-outline" onclick="startDemo()">Try Demo Mode</button>
+    <button class="gbtn" onclick="startCam()">Allow Camera</button>
+    <button class="obtn" style="margin-top:4px" onclick="startDemo()">Demo Mode</button>
   </div>
 
-  <!-- Klip overlays -->
-  <div class="klip" id="k1" style="top:22%;left:12%">
-    <div class="klip-ball" style="background:radial-gradient(circle,rgba(201,168,76,0.45),rgba(201,168,76,0.05))">
-      <div class="klip-ring" style="border-color:#C9A84C60"></div>
-      <div class="klip-ring klip-ring2" style="border-color:#C9A84C35"></div>
-      <div class="klip-n">#1</div>
-    </div>
-    <div class="klip-connector"></div>
-    <div class="klip-card"><div class="klip-card-name">Alex R.</div><div class="klip-card-tier">⬡ Origin · Legendary</div></div>
-  </div>
-
-  <div class="klip" id="k2" style="top:28%;right:10%">
-    <div class="klip-ball" style="background:radial-gradient(circle,rgba(64,144,224,0.45),rgba(64,144,224,0.05))">
-      <div class="klip-ring" style="border-color:#4090E060"></div>
-      <div class="klip-ring klip-ring2" style="border-color:#4090E035"></div>
-      <div class="klip-n">#47</div>
-    </div>
-    <div class="klip-connector"></div>
-    <div class="klip-card"><div class="klip-card-name">Mia S.</div><div class="klip-card-tier">⬡ Origin · Legendary</div></div>
-  </div>
-
-  <div class="klip" id="k3" style="top:55%;left:30%">
-    <div class="klip-ball" style="background:radial-gradient(circle,rgba(144,64,208,0.4),rgba(144,64,208,0.05))">
-      <div class="klip-ring" style="border-color:#9040D060"></div>
-      <div class="klip-ring klip-ring2" style="border-color:#9040D035"></div>
-      <div class="klip-n">#312</div>
-    </div>
-    <div class="klip-connector"></div>
-    <div class="klip-card"><div class="klip-card-name">Omar K.</div><div class="klip-card-tier">◎ Rare</div></div>
-  </div>
-
-  <div class="hud-top">
-    <div class="hud-logo">Kli<span>py</span>t</div>
-    <div class="hud-right"><span class="big" id="myNumHud">#14</span>Origin</div>
-  </div>
-
-  <div class="reticle">
-    <div class="rc rc-tl"></div><div class="rc rc-tr"></div>
-    <div class="rc rc-bl"></div><div class="rc rc-br"></div>
-    <div class="scan-line"></div>
-    <div class="scan-txt">SCANNING FOR KLIPS</div>
-  </div>
-
-  <div class="toast" id="toast">
-    <div class="toast-label">Klip detected</div>
-    <div class="toast-name" id="toastTxt">—</div>
-  </div>
-
-  <div class="hud-bot">
-    <div class="status"><span class="dot"></span>AR Live</div>
-    <div class="hud-btns">
-      <button class="hud-btn-text" onclick="openModal()">My Klip</button>
-      <button class="hud-btn" onclick="rescan()" title="Rescan">⬡</button>
-      <button class="hud-btn" onclick="show('setup')" title="Settings">◈</button>
-    </div>
+  <!-- Model loading overlay -->
+  <div id="loading" class="hide">
+    <div class="lring"></div>
+    <div class="ltxt" id="ltxt">Loading face model...</div>
+    <div class="lprog"><div class="lprog-bar" id="lprog"></div></div>
+    <div class="ltxt" style="font-size:9px;margin-top:8px;opacity:.5">This only happens once</div>
   </div>
 </div>
 
 <!-- MY KLIP MODAL -->
-<div id="myModal">
-  <button class="m-close" onclick="closeModal()">✕</button>
-  <div class="m-aura" id="mAura">
-    <div class="m-ring m-ring1" id="mR1"></div>
-    <div class="m-ring m-ring2" id="mR2"></div>
-    <div class="m-ring m-ring3" id="mR3"></div>
-    <div class="m-num">#14</div>
+<div id="modal">
+  <button class="mclose" onclick="closeModal()">✕</button>
+  <div class="maura" id="maura">
+    <div class="mring mring1" id="mr1"></div>
+    <div class="mring mring2" id="mr2"></div>
+    <div class="mring mring3" id="mr3"></div>
+    <div class="mnum">#14</div>
   </div>
-  <div class="m-name" id="mName">Your Name</div>
-  <div class="m-tier">⬡ Origin — Legendary</div>
-  <div class="m-stats">
-    <div class="m-stat"><div class="m-stat-n" id="encN">0</div><div class="m-stat-l">Encounters</div></div>
-    <div class="m-stat"><div class="m-stat-n">14</div><div class="m-stat-l">Member #</div></div>
-    <div class="m-stat"><div class="m-stat-n">1</div><div class="m-stat-l">Territory</div></div>
+  <div class="mname" id="mname">Your Name</div>
+  <div class="mtier">⬡ Origin — Legendary</div>
+  <div class="mstats">
+    <div class="mstat"><div class="msn" id="encN">0</div><div class="msl">Faces seen</div></div>
+    <div class="mstat"><div class="msn">14</div><div class="msl">Member #</div></div>
+    <div class="mstat"><div class="msn">1</div><div class="msl">Territory</div></div>
   </div>
-  <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;color:var(--white-dim);text-align:center;line-height:1.9">
-    This is what people see<br>when they scan you in AR
+  <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;color:var(--wdim);text-align:center;line-height:1.9">
+    Point your camera at someone<br>to detect their Klip in AR
   </div>
 </div>
 
+<!-- face-api.js injected by build script -->
+<script id="faceapi-script"></script>
+
 <script>
-  let auraColor = '#C9A84C', userName = 'You', encounters = 0;
+// ── STATE ──
+let auraColor='#C9A84C', userName='You', faceCount=0, modelLoaded=false, demoMode=false;
+let detectionLoop=null, encounters=0;
 
-  function show(id) {
-    document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
-    document.getElementById(id).classList.remove('hidden');
-  }
+// Demo face positions (normalized 0-1)
+const demoFaces=[
+  {x:.25,y:.3,w:.2,h:.25,klip:0},
+  {x:.6,y:.25,w:.18,h:.22,klip:1},
+  {x:.1,y:.55,w:.22,h:.28,klip:2},
+];
+let demoActive=false, demoFaceIdx=0;
 
-  function pickAura(el, color) {
-    document.querySelectorAll('.aura-opt').forEach(o => o.classList.remove('sel'));
-    el.classList.add('sel');
-    auraColor = color;
-  }
+// Member DB simulation
+const members=[
+  {num:'#14',  name:'',       tier:'⬡ Origin · Legendary', color:'#C9A84C'},
+  {num:'#47',  name:'Mia S.', tier:'⬡ Origin · Legendary', color:'#4090E0'},
+  {num:'#312', name:'Omar K.',tier:'◎ Rare',                color:'#9040D0'},
+  {num:'#1,204',name:'Sofia L.',tier:'◈ Select',            color:'#30C060'},
+];
 
-  function launch() {
-    const n = document.getElementById('nameIn').value.trim();
-    if (n) userName = n;
-    updateModal();
-    show('ar');
-    // Show permission panel
-    document.getElementById('camPanel').classList.remove('hidden');
-  }
+// ── NAVIGATION ──
+function show(id){
+  document.querySelectorAll('.scr').forEach(s=>s.classList.add('off'));
+  document.getElementById(id).classList.remove('off');
+}
 
-  function updateModal() {
-    document.getElementById('mName').textContent = userName;
-    const c = auraColor;
-    document.getElementById('mAura').style.background = `radial-gradient(circle, ${c}50, ${c}08)`;
-    document.getElementById('mR1').style.borderColor = c + '80';
-    document.getElementById('mR2').style.borderColor = c + '40';
-    document.getElementById('mR3').style.borderColor = c + '18';
-  }
+// ── SETUP ──
+function pickAura(el,color){
+  document.querySelectorAll('.aopt').forEach(o=>o.classList.remove('sel'));
+  el.classList.add('sel'); auraColor=color;
+  members[0].color=color;
+}
 
-  async function startCam() {
-    document.getElementById('camPanel').classList.add('hidden');
-    const video = document.getElementById('video');
-    const demoBg = document.getElementById('demoBg');
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 } },
-        audio: false
-      });
-      video.srcObject = stream;
-      await video.play();
-      video.style.display = 'block';
-      demoBg.style.display = 'none';
-      initCanvas();
-      setTimeout(showKlips, 1500);
-    } catch(e) {
-      console.warn('Camera:', e.message);
-      // Show helpful re-try panel
-      document.getElementById('camPanel').classList.remove('hidden');
-      // Change button text if denied
-      if (e.name === 'NotAllowedError') {
-        document.querySelector('#camPanel .btn-gold').textContent = 'Retry Camera';
-      }
+function goAR(){
+  const n=document.getElementById('nameIn').value.trim();
+  if(n){userName=n; members[0].name=n;}
+  document.getElementById('kname0').textContent=userName;
+  document.getElementById('mname').textContent=userName||'Your Name';
+  updateModalAura();
+  show('ar');
+}
+
+function updateModalAura(){
+  const c=auraColor;
+  document.getElementById('maura').style.background=`radial-gradient(circle,${c}50,${c}08)`;
+  document.getElementById('mr1').style.borderColor=c+'80';
+  document.getElementById('mr2').style.borderColor=c+'40';
+  document.getElementById('mr3').style.borderColor=c+'18';
+}
+
+// ── CAMERA ──
+async function startCam(){
+  document.getElementById('campanel').classList.add('hide');
+  document.getElementById('loading').classList.remove('hide');
+  setStatus('yellow','Loading AI model...');
+
+  // Load face-api model
+  await loadFaceModel();
+
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video:{facingMode:{ideal:'environment'}, width:{ideal:1280}, height:{ideal:720}},
+      audio:false
+    });
+    const video=document.getElementById('video');
+    video.srcObject=stream;
+    await video.play();
+    video.style.display='block';
+    document.getElementById('loading').classList.add('hide');
+    resizeCanvas();
+    setStatus('green','Face AR Active');
+    startDetection();
+  } catch(e){
+    console.warn('Camera:',e.message);
+    document.getElementById('loading').classList.add('hide');
+    document.getElementById('campanel').classList.remove('hide');
+    if(e.name==='NotAllowedError'){
+      document.querySelector('#campanel .gbtn').textContent='Retry Camera';
     }
   }
+}
 
-  function startDemo() {
-    document.getElementById('camPanel').classList.add('hidden');
-    document.getElementById('demoBg').style.display = 'flex';
-    document.getElementById('video').style.display = 'none';
-    initCanvas();
-    setTimeout(showKlips, 1200);
+function startDemo(){
+  document.getElementById('campanel').classList.add('hide');
+  document.getElementById('loading').classList.remove('hide');
+  setStatus('yellow','Loading AI model...');
+  demoMode=true;
+
+  loadFaceModel().then(()=>{
+    document.getElementById('loading').classList.add('hide');
+    // Create gradient demo background
+    const canvas=document.getElementById('overlay');
+    setStatus('green','Demo Mode · Face AR');
+    resizeCanvas();
+    startDemoLoop();
+  });
+}
+
+// ── FACE-API MODEL LOADER ──
+// Models are loaded from GitHub raw (accessible in this environment)
+async function loadFaceModel(){
+  if(modelLoaded) return;
+
+  const MODEL_URL='https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights';
+
+  try {
+    setProgress(10); document.getElementById('ltxt').textContent='Loading face-api.js...';
+
+    // Load script dynamically
+    await loadScript('https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/dist/face-api.min.js');
+    setProgress(50); document.getElementById('ltxt').textContent='Loading face model...';
+
+    await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+    setProgress(100); document.getElementById('ltxt').textContent='Model ready!';
+    modelLoaded=true;
+    await sleep(400);
+  } catch(e) {
+    console.warn('Model load failed, using simulation:', e.message);
+    modelLoaded=true; // fallback to simulation
+    setProgress(100);
+    document.getElementById('ltxt').textContent='Demo mode ready';
+    await sleep(300);
   }
+}
 
-  function initCanvas() {
-    const c = document.getElementById('arCanvas');
-    const ctx = c.getContext('2d');
-    c.width = window.innerWidth; c.height = window.innerHeight;
-    window.addEventListener('resize', () => { c.width = window.innerWidth; c.height = window.innerHeight; });
+function loadScript(src){
+  return new Promise((res,rej)=>{
+    const s=document.createElement('script');
+    s.src=src; s.onload=res; s.onerror=rej;
+    document.head.appendChild(s);
+  });
+}
 
-    const pts = Array.from({length:35}, () => ({
-      x: Math.random()*c.width, y: Math.random()*c.height,
-      vx:(Math.random()-.5)*.25, vy:(Math.random()-.5)*.25,
-      r: Math.random()*1.2+.3, o: Math.random()*.25+.04
-    }));
+function setProgress(pct){
+  document.getElementById('lprog').style.width=pct+'%';
+}
 
-    (function draw() {
-      ctx.clearRect(0,0,c.width,c.height);
-      ctx.strokeStyle='rgba(201,168,76,0.035)'; ctx.lineWidth=1;
-      const g=55;
-      for(let x=0;x<c.width;x+=g){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,c.height);ctx.stroke();}
-      for(let y=0;y<c.height;y+=g){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(c.width,y);ctx.stroke();}
-      pts.forEach(p=>{
-        p.x+=p.vx; p.y+=p.vy;
-        if(p.x<0)p.x=c.width; if(p.x>c.width)p.x=0;
-        if(p.y<0)p.y=c.height; if(p.y>c.height)p.y=0;
-        ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
-        ctx.fillStyle=`rgba(201,168,76,${p.o})`; ctx.fill();
-      });
-      requestAnimationFrame(draw);
-    })();
+// ── FACE DETECTION LOOP ──
+function startDetection(){
+  const video=document.getElementById('video');
+  const canvas=document.getElementById('overlay');
+
+  async function detect(){
+    if(!video.paused && !video.ended && video.readyState>=2){
+      let detections=[];
+
+      if(typeof faceapi!=='undefined' && modelLoaded){
+        try{
+          detections = await faceapi.detectAllFaces(video,
+            new faceapi.TinyFaceDetectorOptions({inputSize:224, scoreThreshold:0.4})
+          );
+        }catch(e){ detections=[]; }
+      }
+
+      drawAROverlay(canvas, video, detections);
+      updateFaceBadge(detections.length);
+
+      if(detections.length>0 && detections.length!==faceCount){
+        faceCount=detections.length;
+        encounters+=detections.length;
+        document.getElementById('encN').textContent=encounters;
+        showToast(detections.length+' face'+(detections.length>1?'s':'')+' detected');
+      } else if(detections.length===0){
+        faceCount=0;
+        hideAllCards();
+      }
+    }
+    detectionLoop=requestAnimationFrame(detect);
   }
+  detect();
+}
 
-  const klipData = [
-    {id:'k1', name:'Alex R.', num:'#1'},
-    {id:'k2', name:'Mia S.', num:'#47'},
-    {id:'k3', name:'Omar K.', num:'#312'}
-  ];
+// ── DEMO LOOP (simulated faces) ──
+function startDemoLoop(){
+  const canvas=document.getElementById('overlay');
+  let frame=0;
 
-  function showKlips() {
-    klipData.forEach((k, i) => {
-      setTimeout(() => {
-        document.getElementById(k.id).classList.add('on');
-        if (i < 2) showToast(k.name, k.num);
-      }, i * 1100);
+  // Show demo faces sequentially
+  const showDemoFace=(idx)=>{
+    if(idx>=demoFaces.length) return;
+    setTimeout(()=>{
+      positionKlipCard(idx, demoFaces[idx]);
+      encounters++;
+      document.getElementById('encN').textContent=encounters;
+      showToast('Klip detected: '+members[Math.min(idx,members.length-1)].num);
+      showDemoFace(idx+1);
+    }, idx*1400+800);
+  };
+  showDemoFace(0);
+
+  // Draw animated demo background + face boxes
+  function drawDemo(){
+    const ctx=canvas.getContext('2d');
+    const W=canvas.width, H=canvas.height;
+    ctx.clearRect(0,0,W,H);
+
+    // Dark gradient bg
+    const grad=ctx.createRadialGradient(W*.3,H*.4,0,W*.5,H*.5,W*.7);
+    grad.addColorStop(0,'rgba(201,168,76,0.03)');
+    grad.addColorStop(1,'rgba(6,6,8,0.0)');
+    ctx.fillStyle=grad; ctx.fillRect(0,0,W,H);
+
+    // Grid
+    ctx.strokeStyle='rgba(201,168,76,0.04)'; ctx.lineWidth=1;
+    for(let x=0;x<W;x+=55){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+    for(let y=0;y<H;y+=55){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+
+    // Simulated face boxes with AR treatment
+    frame++;
+    demoFaces.forEach((f,i)=>{
+      const card=document.getElementById('kcard'+i);
+      if(!card || !card.classList.contains('show')) return;
+      const x=f.x*W, y=f.y*H, w=f.w*W, h=f.h*H;
+      const pulse=Math.sin(frame*.05+i)*0.3+0.7;
+      const c=members[Math.min(i,members.length-1)].color;
+
+      // Face detection box
+      ctx.strokeStyle=c; ctx.lineWidth=1.5; ctx.globalAlpha=pulse*.6;
+      ctx.strokeRect(x,y,w,h);
+      ctx.globalAlpha=1;
+
+      // Corner accents
+      const cs=16; ctx.lineWidth=2.5; ctx.strokeStyle=c; ctx.globalAlpha=pulse;
+      ctx.beginPath(); ctx.moveTo(x,y+cs); ctx.lineTo(x,y); ctx.lineTo(x+cs,y); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x+w-cs,y); ctx.lineTo(x+w,y); ctx.lineTo(x+w,y+cs); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x,y+h-cs); ctx.lineTo(x,y+h); ctx.lineTo(x+cs,y+h); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x+w-cs,y+h); ctx.lineTo(x+w,y+h); ctx.lineTo(x+w,y+h-cs); ctx.stroke();
+      ctx.globalAlpha=1;
+
+      // Center dot
+      ctx.beginPath(); ctx.arc(x+w/2,y+h/2,3,0,Math.PI*2);
+      ctx.fillStyle=c; ctx.globalAlpha=pulse; ctx.fill(); ctx.globalAlpha=1;
+
+      // Connector line to card
+      ctx.beginPath(); ctx.moveTo(x+w/2,y);
+      ctx.lineTo(x+w/2,y-20);
+      ctx.strokeStyle=c; ctx.lineWidth=1; ctx.globalAlpha=.4; ctx.stroke(); ctx.globalAlpha=1;
     });
-    startAutoScan();
+
+    requestAnimationFrame(drawDemo);
   }
+  drawDemo();
+}
 
-  function hideKlips() { klipData.forEach(k => document.getElementById(k.id).classList.remove('on')); }
+// ── REAL FACE DETECTION DRAWING ──
+function drawAROverlay(canvas, video, detections){
+  const ctx=canvas.getContext('2d');
+  const W=canvas.width, H=canvas.height;
+  const scaleX=W/video.videoWidth, scaleY=H/video.videoHeight;
+  ctx.clearRect(0,0,W,H);
 
-  function rescan() { hideKlips(); setTimeout(showKlips, 500); encounters++; document.getElementById('encN').textContent = encounters; }
+  // Grid
+  ctx.strokeStyle='rgba(201,168,76,0.04)'; ctx.lineWidth=1;
+  for(let x=0;x<W;x+=55){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+  for(let y=0;y<H;y+=55){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
 
-  function showToast(name, num) {
-    const t = document.getElementById('toast');
-    document.getElementById('toastTxt').textContent = `${name} — ${num}`;
-    t.classList.add('show');
-    setTimeout(() => t.classList.remove('show'), 2800);
+  detections.forEach((det,i)=>{
+    const box=det.box||det;
+    const x=(W-box.x*scaleX-box.width*scaleX); // mirror for front cam
+    const y=box.y*scaleY;
+    const w=box.width*scaleX;
+    const h=box.height*scaleY;
+    const c=members[Math.min(i,members.length-1)].color||auraColor;
+    const cs=18;
+
+    // Outer glow
+    ctx.shadowColor=c; ctx.shadowBlur=12;
+    ctx.strokeStyle=c; ctx.lineWidth=1.5; ctx.globalAlpha=.5;
+    ctx.strokeRect(x,y,w,h);
+    ctx.shadowBlur=0; ctx.globalAlpha=1;
+
+    // Corners
+    ctx.lineWidth=2.5; ctx.strokeStyle=c;
+    ctx.beginPath(); ctx.moveTo(x,y+cs); ctx.lineTo(x,y); ctx.lineTo(x+cs,y); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x+w-cs,y); ctx.lineTo(x+w,y); ctx.lineTo(x+w,y+cs); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x,y+h-cs); ctx.lineTo(x,y+h); ctx.lineTo(x+cs,y+h); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x+w-cs,y+h); ctx.lineTo(x+w,y+h); ctx.lineTo(x+w,y+h-cs); ctx.stroke();
+
+    // Center cross
+    ctx.lineWidth=1; ctx.globalAlpha=.4;
+    ctx.beginPath(); ctx.moveTo(x+w/2-8,y+h/2); ctx.lineTo(x+w/2+8,y+h/2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x+w/2,y+h/2-8); ctx.lineTo(x+w/2,y+h/2+8); ctx.stroke();
+    ctx.globalAlpha=1;
+
+    // Connector line up
+    ctx.beginPath(); ctx.moveTo(x+w/2,y); ctx.lineTo(x+w/2,y-22);
+    ctx.strokeStyle=c; ctx.lineWidth=1; ctx.globalAlpha=.5; ctx.stroke(); ctx.globalAlpha=1;
+
+    // Position DOM card
+    positionKlipCardReal(i, x+w/2, y-22);
+  });
+
+  // Hide cards for faces no longer detected
+  for(let i=detections.length;i<4;i++){
+    const card=document.getElementById('kcard'+i);
+    if(card) card.classList.remove('show');
   }
+}
 
-  let autoScanTimer;
-  function startAutoScan() {
-    clearInterval(autoScanTimer);
-    autoScanTimer = setInterval(() => {
-      if (!document.getElementById('myModal').classList.contains('open')) rescan();
-    }, 9000);
+function positionKlipCard(idx, face){
+  const canvas=document.getElementById('overlay');
+  const W=canvas.width, H=canvas.height;
+  const centerX=(face.x+face.w/2)*W;
+  const topY=face.y*H;
+  const card=document.getElementById('kcard'+idx);
+  if(!card) return;
+  card.style.left=centerX+'px';
+  card.style.top=Math.max(50,(topY-85))+'px';
+  card.classList.add('show');
+}
+
+function positionKlipCardReal(idx, cx, topY){
+  const card=document.getElementById('kcard'+idx);
+  if(!card) return;
+  card.style.left=cx+'px';
+  card.style.top=Math.max(50,topY-75)+'px';
+  card.classList.add('show');
+}
+
+function hideAllCards(){
+  for(let i=0;i<4;i++){
+    const card=document.getElementById('kcard'+i);
+    if(card) card.classList.remove('show');
   }
+}
 
-  function openModal() { document.getElementById('myModal').classList.add('open'); }
-  function closeModal() { document.getElementById('myModal').classList.remove('open'); }
-  document.getElementById('myModal').addEventListener('click', function(e){ if(e.target===this) closeModal(); });
+// ── CANVAS RESIZE ──
+function resizeCanvas(){
+  const canvas=document.getElementById('overlay');
+  canvas.width=window.innerWidth;
+  canvas.height=window.innerHeight;
+}
+window.addEventListener('resize',resizeCanvas);
+
+// ── UI HELPERS ──
+function setStatus(color, txt){
+  document.getElementById('statDot').className='dot '+color;
+  document.getElementById('statTxt').innerHTML=
+    `<span class="dot ${color}" id="statDot"></span>${txt}`;
+}
+
+function updateFaceBadge(n){
+  document.getElementById('fbadge').textContent=n+' FACE'+(n!==1?'S':'');
+}
+
+function showToast(txt){
+  const t=document.getElementById('toast');
+  document.getElementById('ttxt').textContent=txt;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2800);
+}
+
+function openModal(){ document.getElementById('modal').classList.add('open'); }
+function closeModal(){ document.getElementById('modal').classList.remove('open'); }
+document.getElementById('modal').addEventListener('click',function(e){if(e.target===this)closeModal();});
+
+function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
 </script>
 </body>
 </html>
